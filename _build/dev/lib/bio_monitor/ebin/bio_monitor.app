@@ -12,6 +12,7 @@
                         'Elixir.BioMonitor.Router.Helpers',
                         'Elixir.BioMonitor.Routine',
                         'Elixir.BioMonitor.RoutineController',
+                        'Elixir.BioMonitor.RoutineMonitor',
                         'Elixir.BioMonitor.RoutineView',
                         'Elixir.BioMonitor.UserSocket',
                         'Elixir.BioMonitor.Web']},
