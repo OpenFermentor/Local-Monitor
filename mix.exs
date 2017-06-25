@@ -19,7 +19,7 @@ defmodule BioMonitor.Mixfile do
   def application do
     [mod: {BioMonitor, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :faker_elixir_octopus]]
+                    :phoenix_ecto, :postgrex, :faker]]
   end
 
   # Specifies which paths to compile per environment.
@@ -37,7 +37,7 @@ defmodule BioMonitor.Mixfile do
       {:postgrex, ">= 0.0.0"},
       {:gettext, "~> 0.11"},
       {:cowboy, "~> 1.0"},
-      {:faker_elixir_octopus, "~> 1.0.0",  only: [:dev, :test]},
+      {:faker, "~> 0.8",  only: [:dev, :test]},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:nerves_uart, "~> 0.1"},
     ]
