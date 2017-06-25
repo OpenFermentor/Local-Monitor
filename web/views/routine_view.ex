@@ -1,8 +1,8 @@
 defmodule BioMonitor.RoutineView do
   use BioMonitor.Web, :view
 
-  def render("index.json", %{title: title}) do
-    %{data: render_many(title, BioMonitor.RoutineView, "routine.json")}
+  def render("index.json", %{routine: routine}) do
+    %{data: render_many(routine, BioMonitor.RoutineView, "routine.json")}
   end
 
   def render("show.json", %{routine: routine}) do

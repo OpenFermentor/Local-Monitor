@@ -8,6 +8,8 @@ defmodule BioMonitor.Router do
   scope "/api", BioMonitor do
     pipe_through :api
 
-    resources "/routines", RoutineController, except: [:new, :edit]
+    resources "/routines", RoutineController, except: [:new, :edit] do
+      resources "/readings", ReadingController, except: [:new, :edit, :update]
+    end
   end
 end

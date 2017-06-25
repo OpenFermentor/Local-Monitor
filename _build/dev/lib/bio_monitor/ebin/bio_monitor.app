@@ -4,8 +4,11 @@
                         'Elixir.BioMonitor.Endpoint',
                         'Elixir.BioMonitor.ErrorHelpers',
                         'Elixir.BioMonitor.ErrorView',
-                        'Elixir.BioMonitor.Gettext','Elixir.BioMonitor.Repo',
-                        'Elixir.BioMonitor.Router',
+                        'Elixir.BioMonitor.Gettext',
+                        'Elixir.BioMonitor.Reading',
+                        'Elixir.BioMonitor.ReadingController',
+                        'Elixir.BioMonitor.ReadingView',
+                        'Elixir.BioMonitor.Repo','Elixir.BioMonitor.Router',
                         'Elixir.BioMonitor.Router.Helpers',
                         'Elixir.BioMonitor.Routine',
                         'Elixir.BioMonitor.RoutineController',
@@ -17,4 +20,4 @@
               {mod,{'Elixir.BioMonitor',[]}},
               {applications,[kernel,stdlib,elixir,phoenix,phoenix_pubsub,
                              cowboy,logger,gettext,phoenix_ecto,postgrex,
-                             faker_elixir_octopus]}]}.
+                             faker]}]}.

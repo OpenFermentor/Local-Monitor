@@ -4,8 +4,8 @@ defmodule BioMonitor.RoutineController do
   alias BioMonitor.Routine
 
   def index(conn, _params) do
-    title = Repo.all(Routine)
-    render(conn, "index.json", title: title)
+    routine = Repo.all(Routine)
+    render(conn, "index.json", routine: routine)
   end
 
   def create(conn, %{"routine" => routine_params}) do

@@ -1,6 +1,10 @@
 defmodule BioMonitor.Routine do
   use BioMonitor.Web, :model
 
+  @moduledoc """
+    Model used to define routines.
+  """
+
   schema "routines" do
     field :title, :string
     field :strain, :string
@@ -11,6 +15,7 @@ defmodule BioMonitor.Routine do
     field :target_density, :float
     field :estimated_time_seconds, :float
     field :extra_notes, :string
+    has_many :readings, BioMonitor.Reading
 
     timestamps()
   end
