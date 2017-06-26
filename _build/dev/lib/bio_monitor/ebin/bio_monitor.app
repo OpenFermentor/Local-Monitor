@@ -11,6 +11,7 @@
                         'Elixir.BioMonitor.Repo','Elixir.BioMonitor.Router',
                         'Elixir.BioMonitor.Router.Helpers',
                         'Elixir.BioMonitor.Routine',
+                        'Elixir.BioMonitor.RoutineChannel',
                         'Elixir.BioMonitor.RoutineController',
                         'Elixir.BioMonitor.RoutineMonitor',
                         'Elixir.BioMonitor.RoutineView',

@@ -8,6 +8,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   alias BioMonitor.Routine
   alias BioMonitor.Reading
+  alias Ecto.Repo
 
   # User API
   def start_link() do
