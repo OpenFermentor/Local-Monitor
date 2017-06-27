@@ -10,9 +10,10 @@ defmodule BioMonitor.RoutineController do
 
   def create(conn, %{"routine" => routine_params}) do
     changeset = Routine.changeset(%Routine{}, routine_params)
-
-    case Repo.insert(changeset) do
+    with {:ok, false} <- BioMonitor.RoutineMonitor.is_running?() do
+      case Repo.insert(changeset) do
       {:ok, routine} ->
+        BioMonitor.RoutineMonitor.start_routine(routine)
         conn
         |> put_status(:created)
         |> put_resp_header("location", routine_path(conn, :show, routine))
@@ -21,6 +22,12 @@ defmodule BioMonitor.RoutineController do
         conn
         |> put_status(:unprocessable_entity)
         |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
+      end
+    else
+      _ ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.RoutineView, "unavailable.json")
     end
   end
 
@@ -47,5 +54,22 @@ defmodule BioMonitor.RoutineController do
     routine = Repo.get!(Routine, id)
     Repo.delete!(routine)
     send_resp(conn, :no_content, "")
+  end
+
+  def stop(conn, _params) do
+    BioMonitor.RoutineMonitor.stop_routine()
+    send_resp(conn, :no_content, "")
+  end
+
+  def start(conn, %{"id" => id}) do
+    routine = Repo.get!(Routine, id)
+    case BioMonitor.RoutineMonitor.is_running?() do
+      {:ok, false} ->
+        BioMonitor.RoutineMonitor.start_routine(routine)
+      {:ok, true} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.RoutineView, "unavailable.json")
+    end
   end
 end

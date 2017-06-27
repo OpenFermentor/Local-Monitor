@@ -24,4 +24,8 @@ defmodule BioMonitor.RoutineView do
       updated_at: routine.updated_at,
     }
   end
+
+  def render("unavailable.json", _assigns) do
+    %{error: "The fermentor is running another routine right now"}
+  end
 end

@@ -1,5 +1,6 @@
 defmodule BioMonitor.RoutineMonitor do
-  use GenServer
+  use GenServer, otp_app: :bio_monitor
+
   @moduledoc """
     The RoutineMonitor is in charge of controlling the currently running routine.
   """
@@ -8,7 +9,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   alias BioMonitor.Routine
   alias BioMonitor.Reading
-  alias Ecto.Repo
+  alias BioMonitor.Repo
 
   # User API
   def start_link() do
@@ -31,14 +32,23 @@ defmodule BioMonitor.RoutineMonitor do
     GenServer.call(@name, {:update, routine})
   end
 
+  def is_running?()do
+    GenServer.call(@name, :is_running)
+  end
+
   # GenServer Callbacks
   def init(:ok) do
     {:ok, %{:loop => false, :routine => %{}}}
   end
 
-  def handle_call({:start,  routine}, _from, _state) do
-    schedule_work()
-    {:reply, :ok, %{:loop => true, :routine => routine}}
+  def handle_call({:start,  routine}, _from, %{loop: runLoop, routine: _routine} = state) do
+    case runLoop do
+      true ->
+        {:reply, :routine_in_progress, state}
+      false ->
+        schedule_work()
+        {:reply, :ok, %{:loop => true, :routine => routine}}
+    end
   end
 
   def handle_call(:stop, _from, _state) do
@@ -47,6 +57,10 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call({:update, routine}, _from, _state) do
     {:reply, :ok, %{:loop => true, :routine => routine}}
+  end
+
+  def handle_call(:is_running, _from, %{loop: runLoop, routine: _routine} = state) do
+    {:reply, {:ok, runLoop}, state}
   end
 
   def handle_info(:loop, state = %{loop: runLoop, routine: routine}) do
