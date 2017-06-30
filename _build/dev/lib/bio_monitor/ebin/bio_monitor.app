@@ -16,7 +16,7 @@
                         'Elixir.BioMonitor.RoutineMonitor',
                         'Elixir.BioMonitor.RoutineView',
                         'Elixir.BioMonitor.UserSocket',
-                        'Elixir.BioMonitor.Web']},
+                        'Elixir.BioMonitor.Web','Elixir.SerialMonitor']},
               {registered,[]},
               {vsn,"0.0.1"},
               {mod,{'Elixir.BioMonitor',[]}},
