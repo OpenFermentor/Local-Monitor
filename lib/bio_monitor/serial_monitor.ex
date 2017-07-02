@@ -1,4 +1,4 @@
-defmodule SerialMonitor do
+defmodule BioMonitor.SerialMonitor do
   use GenServer
 
   @moduledoc """
@@ -57,7 +57,7 @@ defmodule SerialMonitor do
   end
 
   def handle_call(:get_readings, _from, state) do
-    {:reply, {:ok, state |> read_from_ports}, %{state | readings: %{}}}
+    {:reply, {:ok, state |> read_from_ports}, state}
   end
 
   def handle_call({:send_command, %{sensor: sensor, command: command}}, _from, state) do
@@ -69,16 +69,12 @@ defmodule SerialMonitor do
   end
 
   defp read_from_ports(state) do
-    values = Map.values(state.ports)
-    if values == [] do
-      []
-    end
     state.ports
     |> Enum.map(fn {type, data} ->
         _ = Nerves.UART.write(data.port, data.get_cmd)
        {type, read_from_port(state, type, data.port)}
        end)
-    |> Enum.into %{}
+    |> Enum.into(%{})
   end
 
   defp read_from_port(state, type, port) do
