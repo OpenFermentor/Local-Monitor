@@ -7,9 +7,9 @@ defmodule BioMonitor.SerialMonitor do
 
   @name SerialMonitor
 
-  @port_speed 115_200
+  @port_speed 9_600
   @read_delay_ms 30_000
-  @new_line '\n'
+  @new_line "\n"
 
   #User API
   def start_link() do
@@ -43,14 +43,14 @@ defmodule BioMonitor.SerialMonitor do
     {:reply, {:ok, Nerves.UART.enumerate}, state}
   end
 
-  def handle_call({:set_port, %{type: type, port: port}}, _from, state) do
+  def handle_call({:set_port, %{type: type, data: port}}, _from, state) do
     if Map.has_key?(state.ports, type) do
       {:reply, :error, state}
     end
-    result = Nerves.UART.open(state.serial_pid, port, speed: @port_speed, active: false)
+    result = Nerves.UART.open(state.serial_pid, port.port, speed: @port_speed, active: false)
     case result do
       :ok ->
-        {:reply, result, Map.put(state.ports, type, port)}
+        {:reply, result, %{state | ports: Map.put(state.ports, type, port)}}
       _ ->
         {:reply, :error, state}
     end
@@ -64,14 +64,14 @@ defmodule BioMonitor.SerialMonitor do
     unless Map.has_key?(state.ports, sensor) do
       {:reply, :error, state}
     end
-    result = Nerves.UART.write(Map.get(state.ports, sensor).port, command)
+    result = Nerves.UART.write(state.serial_pid, command)
     {:reply, (if result == :ok, do: result, else: :error), state}
   end
 
   defp read_from_ports(state) do
     state.ports
     |> Enum.map(fn {type, data} ->
-        _ = Nerves.UART.write(data.port, data.get_cmd)
+        _ = Nerves.UART.write(state.serial_pid, data.get_cmd)
        {type, read_from_port(state, type, data.port)}
        end)
     |> Enum.into(%{})
@@ -80,6 +80,7 @@ defmodule BioMonitor.SerialMonitor do
   defp read_from_port(state, type, port) do
     case Nerves.UART.read(state.serial_pid, @read_delay_ms) do
       {:ok, value} ->
+        IO.puts(value)
         unless is_binary(value) && String.valid?(value) do
           ""
         end
