@@ -7,8 +7,8 @@ defmodule BioMonitor.SerialMonitor do
 
   @name SerialMonitor
 
-  @port_speed 115200
-  @read_delay_ms 30000
+  @port_speed 115_200
+  @read_delay_ms 30_000
   @new_line '\n'
 
   #User API
@@ -44,13 +44,13 @@ defmodule BioMonitor.SerialMonitor do
   end
 
   def handle_call({:set_port, %{type: type, port: port}}, _from, state) do
-    if Map.has_key?(state, type) do
+    if Map.has_key?(state.ports, type) do
       {:reply, :error, state}
     end
     result = Nerves.UART.open(state.serial_pid, port, speed: @port_speed, active: false)
     case result do
       :ok ->
-        {:reply, result, Map.put(state, type, port)}
+        {:reply, result, Map.put(state.ports, type, port)}
       _ ->
         {:reply, :error, state}
     end
