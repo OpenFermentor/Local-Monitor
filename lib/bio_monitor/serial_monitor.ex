@@ -7,13 +7,17 @@ defmodule BioMonitor.SerialMonitor do
 
   @name SerialMonitor
 
-  @port_speed 9_600
   @read_delay_ms 30_000
   @new_line "\n"
+  @end_reading "\r\n"
 
-  @error_opening_port "The port could not be opened"
+  @wrong_argunment "Wrong argument"
+  @unrecognized_command "Unrecognized Command"
+  @generic_error "ERROR"
+
   @error_undefined_sensor "The sensor is undefined"
   @error_sending_command "The command could not be sent"
+  @error_connection_reading "There was a connection error while reading data from sensor"
 
   def start_link() do
     GenServer.start_link(__MODULE__, :ok, [name: @name])
@@ -27,18 +31,27 @@ defmodule BioMonitor.SerialMonitor do
   end
 
   @doc """
-  Adds the sensors whose information comes through the device connected in port
+  Sets the port where the device is connected
 
-  port: String identifying the device. Use `get_ports` to obtain the information
+  name: The name identifier of the port (use `get_ports/0` to retrieve it)
+  speed: The speed of the serial port
+  """
+  def set_port(name, speed) do
+    GenServer.call(@name, {:set_port, %{name: name, speed: speed}})
+  end
+
+  @doc """
+  Adds the sensors whose information comes through the connected device
+
   sensors: Key value pair, where the key is an atom representing the type of
            the sensor, and the value is the command to fetch the data
 
   ## Examples
 
-  add_sensor("COM4", %{temp => "getTemp", ph => "getPh"})
+  add_sensor [temp: "getTemp", ph: "getPh"]
   """
-  def add_sensors(port, sensors) do
-    GenServer.call(@name, {:add_sensors, %{port => port, sensors => sensors}})
+  def add_sensors(sensors) do
+    GenServer.call(@name, {:add_sensors, %{sensors: sensors}})
   end
 
   @doc """
@@ -47,10 +60,7 @@ defmodule BioMonitor.SerialMonitor do
   ## Examples
   If :temp and :ph sensors are defined, then the returned value would be:
 
-  %{
-    temp => 32.3,
-    ph => 9
-  }
+  {:ok, [temp: "20.75", ph: {:error, "Unrecognized Command"}]}
   """
   def get_readings() do
     GenServer.call(@name, :get_readings)
@@ -63,13 +73,14 @@ defmodule BioMonitor.SerialMonitor do
   command: The String instruction to be sent to the sensor
   """
   def send_command(sensor, command) do
-    GenServer.call(@name, {:send_command, %{sensor => sensor, command => command}})
+    GenServer.call(@name, {:send_command, %{sensor: sensor, command: command}})
   end
 
   @doc """
   State structure:
   %{
     serial_pid: The pid of the process that handles serial connectivity
+    port: The port information to establish a connection with the device
     sensors: Key value pair, where the key is an atom representing the type of
              the sensor, and the value is the command to fetch the data
   }
@@ -78,15 +89,19 @@ defmodule BioMonitor.SerialMonitor do
 
   %{
     serial_pid: 1234,
-    sensors: %{
+    port: %{
+      name: The name of the serial port where the device is connected
+      speed: The speed of the serial port
+    }
+    sensors: [
       %{temp => "getTemp"},
       %{ph => "getPh"}
-    }
+    ]
   }
   """
   def init(:ok) do
     {:ok, pid} = Nerves.UART.start_link
-    {:ok, %{serial_pid: pid, sensors: %{}}}
+    {:ok, %{serial_pid: pid, port: %{}, sensors: []}}
   end
 
   @doc """
@@ -98,33 +113,32 @@ defmodule BioMonitor.SerialMonitor do
   end
 
   @doc """
+  Sets the port where the device is connected
+
+  name: The name identifier of the port (use `get_ports/3` to retrieve it)
+  speed: The speed of the serial port
+  """
+  def handle_call({:set_port, %{name: name, speed: speed}}, _from, state) do
+    result = open_connection state.serial_pid, name, speed
+    {:reply, result, %{state | port: %{name: name, speed: speed}}}
+  end
+
+  @doc """
   Register the sensors to read and execute commands.
   Data format: %{
-    port: The port of the device to establish communication,
     sensors: Key value pair, where the key is an atom representing the type of
              the sensor, and the value is the command to fetch the data
   }
 
   ## Examples
 
-  %{
-    port: "COM3",
-    sensors: %{
-      %{temp => "getTemp"},
-      %{ph => "getPh"}
-    }
-  }
+  [
+    %{temp => "getTemp"},
+    %{ph => "getPh"}
+  ]
   """
-  def handle_call({:add_sensors, %{port: port, sensors: sensors}}, _from, state) do
-    result = Enum.reduce sensors, state, fn({sensor, read_command}, acc) ->
-      if acc == :error, do: :error, else: acc |> add_sensor(port, sensor, read_command)
-    end
-    case result do
-      :error ->
-        {:reply, {:error, @error_opening_port}, state}
-      updated_state ->
-        {:reply, :ok, updated_state}
-    end
+  def handle_call({:add_sensors, %{sensors: sensors}}, _from, state) do
+    {:reply, :ok, %{state | sensors: sensors}}
   end
 
   @doc """
@@ -133,10 +147,10 @@ defmodule BioMonitor.SerialMonitor do
 
   ## Example
 
-  %{
+  [
     %{temp => 28.0}
-    %{ph => 7,1}
-  }
+    %{ph => 7.1}
+  ]
   """
   def handle_call(:get_readings, _from, state) do
     {:reply, {:ok, state |> get_sensor_readings}, state}
@@ -146,76 +160,88 @@ defmodule BioMonitor.SerialMonitor do
   Sends the `command` to the specified registered `sensor`
   """
   def handle_call({:send_command, %{sensor: sensor, command: command}}, _from, state) do
-    unless state |> has_sensor(sensor) do
+    unless state.sensors |> Keyword.has_key?(sensor) do
       {:reply, {:error, @error_undefined_sensor}, state}
     end
     result = Nerves.UART.write(state.serial_pid, command)
     {:reply, (if result == :ok, do: result, else: {:error, @error_sending_command}), state}
   end
 
-  # Register a new sensor.
-  # If no sensors are present, then the port communication is opened.
-
-  # state: The state of the GenServer
-  # port: The port where the device is connected
-  # sensor: The type identifier of the sensor to be added
-  # read_command: The command needed to fetch information from the sensor
-  defp add_sensor(state, port, sensor, read_command) do
-    if state |> has_sensor(sensor) do
-      {:reply, :ok, state |> update_sensor(sensor, read_command)}
-    end
-    case state |> open_device_connection(port) do
-      :ok ->
-        %{state | state.sensors => state.sensors |> Map.put(sensor, read_command)}
-      _ ->
-        :error
-    end
-  end
-
   # Opens the connection to the device in the given port
   #
-  # port: The port where the device is located.
-  defp open_device_connection(state, port) do
-    if state.sensors |> Map.keys == [] do
-      :ok
-    end
-    Nerves.UART.open(state.serial_pid, port, speed: @port_speed, active: false)
-  end
-
-  # Returns wheather the sensor is registered
-  defp has_sensor(state, sensor) do
-    Map.has_key?(state.sensors, sensor)
-  end
-
-  # Updates the sensor information with the new read_command
-  defp update_sensor(state, sensor, read_command) do
-    %{state.sensors | sensor => read_command}
+  # uart_pid: The PID of the Nerves process
+  # port: The port where the device is located
+  # speed: The speed of the serial port
+  defp open_connection(uart_pid, port, speed) do
+    Nerves.UART.open(uart_pid, port, speed: speed, active: false)
   end
 
   # Returns the readings for the registered sensors
+  #
+  # state: The state of the application
+  #
+  # Example
+  #
+  # [
+  #   %{temp => "28.0"}
+  #   %{ph => "7.1"}
+  # ]
   defp get_sensor_readings(state) do
     state.sensors
-    |> Enum.map(fn {sensor, read_command} ->
-        _ = Nerves.UART.write(state.serial_pid, read_command)
-       {sensor, state |> get_sensor_reading(sensor)}
-       end)
-    |> Enum.into(%{})
+      |> Enum.map(fn {sensor, read_command} ->
+          _ = Nerves.UART.write(state.serial_pid, read_command)
+          {sensor, state |> get_sensor_reading |> parse_reading}
+         end)
   end
 
   # Retrieves the reading for the given sensor
-  defp get_sensor_reading(state, sensor) do
+  #
+  # state: The state of the application
+  #
+  # Example:
+  #
+  # "28.0"
+  # or
+  # :error
+  defp get_sensor_reading(state) do
     case Nerves.UART.read(state.serial_pid, @read_delay_ms) do
       {:ok, value} ->
         unless is_binary(value) && String.valid?(value) do
-          ""
+          :error
         end
 
         if String.contains? value, @new_line do
           value
         else
-          value <> state |> get_sensor_reading(sensor)
+          result = state |> get_sensor_reading
+          if result == :error, do: :error, else: value <> result
         end
-      _ -> ""
+      _ ->
+        :error
     end
+  end
+
+  # Parses the seansor reading to sanitize and account for errors
+  #
+  # reading: The String reading to parse
+  #
+  # Example:
+  #
+  # "28.0"
+  # or
+  # {:error, "Some error"}
+  defp parse_reading(reading) do
+    case reading do
+      :error ->
+        {:error, @error_connection_reading}
+      value ->
+        value = value |> String.trim_trailing(@end_reading)
+        if value |> is_reading_error, do: {:error, value}, else: value
+    end
+  end
+
+  defp is_reading_error(reading) do
+    errors = [@unrecognized_command, @wrong_argunment, @generic_error]
+    Enum.any?(errors, fn(e) -> String.contains? reading, e end)
   end
 end
