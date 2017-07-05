@@ -240,6 +240,7 @@ defmodule BioMonitor.SerialMonitor do
     end
   end
 
+  # Recognizes if the reading is any of the known error messages
   defp is_reading_error(reading) do
     errors = [@unrecognized_command, @wrong_argunment, @generic_error]
     Enum.any?(errors, fn(e) -> String.contains? reading, e end)
