@@ -41,7 +41,7 @@ defmodule BioMonitor.RoutineMonitor do
     {:ok, %{:loop => false, :routine => %{}}}
   end
 
-  def handle_call({:start,  routine}, _from, %{loop: runLoop, routine: _routine} = state) do
+  def handle_call({:start,  routine}, _from, state = %{loop: runLoop, routine: _routine}) do
     case runLoop do
       true ->
         {:reply, :routine_in_progress, state}
@@ -59,15 +59,16 @@ defmodule BioMonitor.RoutineMonitor do
     {:reply, :ok, %{:loop => true, :routine => routine}}
   end
 
-  def handle_call(:is_running, _from, %{loop: runLoop, routine: _routine} = state) do
+  def handle_call(:is_running, _from, state = %{loop: runLoop, routine: _routine}) do
     {:reply, {:ok, runLoop}, state}
   end
 
   def handle_info(:loop, state = %{loop: runLoop, routine: routine}) do
     case runLoop do
       true ->
-        fetch_reading(routine.id)
-        |> process_reading()
+        routine.id
+        |> fetch_reading
+        |> process_reading
         schedule_work()
       false ->
         IO.puts 'Loop stopped'
