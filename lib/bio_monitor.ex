@@ -16,7 +16,6 @@ defmodule BioMonitor do
       supervisor(BioMonitor.Endpoint, []),
       # Start your own worker by calling: BioMonitor.Worker.start_link(arg1, arg2, arg3)
       supervisor(BioMonitor.RoutineMonitor, []),
-      supervisor(BioMonitor.SerialMonitor, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

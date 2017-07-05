@@ -5,8 +5,6 @@ defmodule BioMonitor.SerialMonitor do
     The SerialMonitor is in charge of the serial communication with the sensors
   """
 
-  @name SerialMonitor
-
   @read_delay_ms 30_000
   @new_line "\n"
   @end_reading "\r\n"
@@ -15,34 +13,37 @@ defmodule BioMonitor.SerialMonitor do
   @unrecognized_command "Unrecognized Command"
   @generic_error "ERROR"
 
-  @error_undefined_sensor "The sensor is undefined"
   @error_sending_command "The command could not be sent"
   @error_connection_reading "There was a connection error while reading data from sensor"
 
-  def start_link() do
-    GenServer.start_link(__MODULE__, :ok, [name: @name])
+  def start_link(opts) do
+    GenServer.start_link(__MODULE__, :ok, opts)
   end
 
   @doc """
   Returns a list of available ports and the devices connected to them
+
+  pid: The PID of the running process
   """
-  def get_ports() do
-    GenServer.call(@name, :get_ports)
+  def get_ports(pid) do
+    GenServer.call(pid, :get_ports)
   end
 
   @doc """
   Sets the port where the device is connected
 
+  pid: The PID of the running process
   name: The name identifier of the port (use `get_ports/0` to retrieve it)
   speed: The speed of the serial port
   """
-  def set_port(name, speed) do
-    GenServer.call(@name, {:set_port, %{name: name, speed: speed}})
+  def set_port(pid, name, speed) do
+    GenServer.call(pid, {:set_port, %{name: name, speed: speed}})
   end
 
   @doc """
   Adds the sensors whose information comes through the connected device
 
+  pid: The PID of the running process
   sensors: Key value pair, where the key is an atom representing the type of
            the sensor, and the value is the command to fetch the data
 
@@ -50,30 +51,33 @@ defmodule BioMonitor.SerialMonitor do
 
   add_sensor [temp: "getTemp", ph: "getPh"]
   """
-  def add_sensors(sensors) do
-    GenServer.call(@name, {:add_sensors, %{sensors: sensors}})
+  def add_sensors(pid, sensors) do
+    GenServer.call(pid, {:add_sensors, %{sensors: sensors}})
   end
 
   @doc """
   Retrieves the readings for the registered sensors
+
+  pid: The PID of the running process
 
   ## Examples
   If :temp and :ph sensors are defined, then the returned value would be:
 
   {:ok, [temp: "20.75", ph: {:error, "Unrecognized Command"}]}
   """
-  def get_readings() do
-    GenServer.call(@name, :get_readings)
+  def get_readings(pid) do
+    GenServer.call(pid, :get_readings)
   end
 
   @doc """
   Sends a command to the sensor.
 
-  sensor: Atom identifying the sensor for the communication
+  pid: The PID of the running process
+
   command: The String instruction to be sent to the sensor
   """
-  def send_command(sensor, command) do
-    GenServer.call(@name, {:send_command, %{sensor: sensor, command: command}})
+  def send_command(pid, command) do
+    GenServer.call(pid, {:send_command, %{command: command}})
   end
 
   @doc """
@@ -157,12 +161,9 @@ defmodule BioMonitor.SerialMonitor do
   end
 
   @doc """
-  Sends the `command` to the specified registered `sensor`
+  Sends the `command` to to the device
   """
-  def handle_call({:send_command, %{sensor: sensor, command: command}}, _from, state) do
-    unless state.sensors |> Keyword.has_key?(sensor) do
-      {:reply, {:error, @error_undefined_sensor}, state}
-    end
+  def handle_call({:send_command, %{command: command}}, _from, state) do
     result = Nerves.UART.write(state.serial_pid, command)
     {:reply, (if result == :ok, do: result, else: {:error, @error_sending_command}), state}
   end
