@@ -40,7 +40,7 @@ defmodule BioMonitor.SensorManager do
   """
   def get_readings() do
     with {:ok, arduino_readings} <- SerialMonitor.get_readings(@arduino_gs),
-      {temp, _} <- Float.parse(arduino_readings.temp)
+      {temp, _} <- Float.parse(arduino_readings[:temp])
     do
       {:ok, %{temp: temp, ph: 0, co2: 0, density: 0}}
     else
