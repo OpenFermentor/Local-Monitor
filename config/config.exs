@@ -26,6 +26,7 @@ config :logger, :console,
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
     port: "dummy port",
+    speed: 9600,
     sensors: [temp: "getTemp"]
   ]
 

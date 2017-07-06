@@ -3,6 +3,9 @@ defmodule BioMonitor do
   @moduledoc"""
     Starting point for the application.
   """
+
+  alias BioMonitor.SensorManager
+
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
   # for more information on OTP Applications
   def start(_type, _args) do
@@ -16,6 +19,7 @@ defmodule BioMonitor do
       supervisor(BioMonitor.Endpoint, []),
       # Start your own worker by calling: BioMonitor.Worker.start_link(arg1, arg2, arg3)
       worker(BioMonitor.RoutineMonitor, []),
+      worker(BioMonitor.SerialMonitor, [[name: SensorManager.arduino_gs_id()]]),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
