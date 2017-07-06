@@ -12,7 +12,7 @@ To run the MonitorBackend follow these steps:
   1. Clone the repo.
   2. Installs the dependencies using `mix deps.get`
   3. Create the database running `mix ecto.create` you need `PostgreSQL` installed and running on your machine.
-  4. Run the server using `mix phoenix.serve`
+  4. Run the server using `mix phoenix.server`
 
 # Dependencies
 The following dependencies are used on this project:
@@ -21,4 +21,3 @@ The following dependencies are used on this project:
   * `Credo` for style code checking.
   * `Faker` for faking data for testing.
   * `Nerves.UART` for communication via serial port with external devices.
-  
