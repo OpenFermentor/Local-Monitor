@@ -10,7 +10,10 @@ defmodule BioMonitor.Mixfile do
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      aliases: aliases(),
-     deps: deps()]
+     deps: deps(),
+     name: "BioMonitor",
+     docs: [
+       main: "BioMonitor"]]
   end
 
   # Configuration for the OTP application.
@@ -31,6 +34,7 @@ defmodule BioMonitor.Mixfile do
   # Type `mix help deps` for examples and options.
   defp deps do
     [
+      {:ex_doc, "~> 0.14", only: :dev, runtime: false},
       {:phoenix, "~> 1.2.4"},
       {:phoenix_pubsub, "~> 1.0"},
       {:phoenix_ecto, "~> 3.0"},
