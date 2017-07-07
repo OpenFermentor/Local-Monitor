@@ -6,10 +6,18 @@ defmodule BioMonitor.RoutineMonitor do
   """
 
   @name RoutineMonitor
+  @reading_interval 5_000
+  @channel "routine:updates"
+  @started_msg "started"
+  @stopped_msg "stopped"
+  @update_msg "update"
+  @alert_msg "alert"
 
+  alias BioMonitor.Endpoint
   alias BioMonitor.Routine
   alias BioMonitor.Reading
   alias BioMonitor.Repo
+  alias BioMonitor.SensorManager
 
   # User API
   def start_link() do
@@ -46,12 +54,27 @@ defmodule BioMonitor.RoutineMonitor do
       true ->
         {:reply, :routine_in_progress, state}
       false ->
-        schedule_work()
-        {:reply, :ok, %{:loop => true, :routine => routine}}
+        case SensorManager.start_sensors() do
+          {:ok, _message} ->
+            Endpoint.broadcast(
+              @channel,
+              @started_msg,
+              %{message: "Started routine", routine: routine}
+            )
+            schedule_work()
+            {:reply, :ok, %{:loop => true, :routine => routine}}
+          {:error, message} ->
+            {:reply, {:error, "Failed to start the sensors", message}, state}
+        end
     end
   end
 
-  def handle_call(:stop, _from, _state) do
+  def handle_call(:stop, _from, %{loop: _runLoop, routine: routine}) do
+    Endpoint.broadcast(
+      @channel,
+      @stopped_msg,
+      %{message: "Stopped routine", routine: routine}
+    )
     {:reply, :ok, %{loop: false, routine: %{}}}
   end
 
@@ -68,7 +91,7 @@ defmodule BioMonitor.RoutineMonitor do
       true ->
         routine.id
         |> fetch_reading
-        |> process_reading
+        |> process_reading(routine)
         schedule_work()
       false ->
         IO.puts 'Loop stopped'
@@ -89,30 +112,59 @@ defmodule BioMonitor.RoutineMonitor do
 
   # Helpers
   defp schedule_work() do
-    Process.send_after(self(), :loop, 1000)
+    Process.send_after(self(), :loop, @reading_interval)
   end
 
   defp fetch_reading(routine_id) do
     IO.puts 'Fetching reading from sensors.'
-    #TODO Do fetching here.
-    data = %{}
-    with routine = Repo.get(Routine, routine_id),
-      true <- routine != nil,
-      reading <- Ecto.build_assoc(routine, :readings),
-      changeset <- Reading.changeset(reading, data),
-      {:ok, reading} <- Repo.insert(changeset)
-    do
-      {:ok, reading}
+    with {:ok, data} <- SensorManager.get_readings() do
+      with routine = Repo.get(Routine, routine_id),
+        true <- routine != nil,
+        reading <- Ecto.build_assoc(routine, :readings),
+        changeset <- Reading.changeset(reading, data),
+        {:ok, reading} <- Repo.insert(changeset)
+      do
+        IO.puts("Successfuly saved new reading.")
+        {:ok, reading}
+      else
+        {:error, changeset} -> {:error, changeset}
+      end
     else
-      {:error, changeset} -> {:error, changeset}
+      {:error, message} -> register_error(message)
+      _ -> register_error("Unexpected error")
     end
   end
 
-  defp process_reading({:ok, reading}) do
-    #TODO Do any pprocessing and broadcast here.
+  defp process_reading({:ok, reading}, routine) do
+    IO.puts(
+      "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
+    )
+    Endpoint.broadcast(@channel, @update_msg, routine)
   end
 
-  defp process_reading({:error, changeset}) do
-    #TODO Broadcast errors from here.
+  defp process_reading({:error, changeset}, routine) do
+    IO.puts("Changeset error for #{routine.id}")
+    Endpoint.broadcast(
+      @channel,
+      @alert_msg,
+      %{
+        message: "Error while saving the reading",
+        errors: changeset.errors
+      }
+    )
+  end
+
+  defp register_error(message) do
+    # Broadcast errors.
+    IO.puts("An error has ocurred while fetching the reading")
+    IO.puts(message)
+    Endpoint.broadcast(
+      @channel,
+      @alert_msg,
+      %{
+        message: "Error while saving the reading",
+        errors: [message]
+      }
+    )
   end
 end

@@ -22,6 +22,14 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
+# Configures ports and variables for Sensors.
+config :bio_monitor, BioMonitor.SensorManager,
+  arduino: [
+    port: "/dev/cu.wchusbserial1410",
+    speed: 9600,
+    sensors: [temp: "getTemp"]
+  ]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env}.exs"
