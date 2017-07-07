@@ -54,6 +54,11 @@ defmodule BioMonitor.SensorManager do
   @doc """
     Sends a command for an specific sensor.
     sensor should be one of the previously reigstered sensors.
+
+    example send_command(:temp, "getTemp")
+    returns:
+      * {:ok, result}
+      * {:error, message}
   """
   def send_command(sensor, command) do
     with {:ok, gs_name} <- gs_name_for_sensor(sensor),

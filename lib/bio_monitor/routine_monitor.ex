@@ -7,6 +7,11 @@ defmodule BioMonitor.RoutineMonitor do
 
   @name RoutineMonitor
   @reading_interval 5_000
+  @channel "routine:updates"
+  @started_msg "started"
+  @stopped_msg "stopped"
+  @update_msg "update"
+  @alert_msg "alert"
 
   alias BioMonitor.Endpoint
   alias BioMonitor.Routine
@@ -52,8 +57,8 @@ defmodule BioMonitor.RoutineMonitor do
         case SensorManager.start_sensors() do
           {:ok, _message} ->
             Endpoint.broadcast(
-              "routine:updates",
-              "started",
+              @channel,
+              @started_msg,
               %{message: "Started routine", routine: routine}
             )
             schedule_work()
@@ -66,8 +71,8 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call(:stop, _from, %{loop: _runLoop, routine: routine}) do
     Endpoint.broadcast(
-      "routine:updates",
-      "stopped",
+      @channel,
+      @stopped_msg,
       %{message: "Stopped routine", routine: routine}
     )
     {:reply, :ok, %{loop: false, routine: %{}}}
@@ -134,14 +139,14 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts(
       "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
     )
-    Endpoint.broadcast("routine:updates", "update", routine)
+    Endpoint.broadcast(@channel, @update_msg, routine)
   end
 
   defp process_reading({:error, changeset}, routine) do
     IO.puts("Changeset error for #{routine.id}")
     Endpoint.broadcast(
-      "routine:updates",
-      "alert",
+      @channel,
+      @alert_msg,
       %{
         message: "Error while saving the reading",
         errors: changeset.errors
@@ -154,8 +159,8 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts("An error has ocurred while fetching the reading")
     IO.puts(message)
     Endpoint.broadcast(
-      "routine:updates",
-      "alert",
+      @channel,
+      @alert_msg,
       %{
         message: "Error while saving the reading",
         errors: [message]
