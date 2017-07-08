@@ -2,7 +2,7 @@ defmodule BioMonitor.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "routine:*", BioMonitor.RoutineChannel
+  channel "routine", BioMonitor.RoutineChannel
 
   ## Transports
   transport :websocket, Phoenix.Transports.WebSocket

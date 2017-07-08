@@ -7,7 +7,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   @name RoutineMonitor
   @reading_interval 5_000
-  @channel "routine:updates"
+  @channel "routine"
   @started_msg "started"
   @stopped_msg "stopped"
   @update_msg "update"
@@ -59,7 +59,7 @@ defmodule BioMonitor.RoutineMonitor do
             Endpoint.broadcast(
               @channel,
               @started_msg,
-              %{message: "Started routine", routine: routine}
+              %{message: "Started routine", routine: routine_to_map(routine)}
             )
             schedule_work()
             {:reply, :ok, %{:loop => true, :routine => routine}}
@@ -73,7 +73,7 @@ defmodule BioMonitor.RoutineMonitor do
     Endpoint.broadcast(
       @channel,
       @stopped_msg,
-      %{message: "Stopped routine", routine: routine}
+      %{message: "Stopped routine", routine: routine_to_map(routine)}
     )
     {:reply, :ok, %{loop: false, routine: %{}}}
   end
@@ -139,7 +139,7 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts(
       "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
     )
-    Endpoint.broadcast(@channel, @update_msg, routine)
+    Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading))
   end
 
   defp process_reading({:error, changeset}, routine) do
@@ -166,5 +166,19 @@ defmodule BioMonitor.RoutineMonitor do
         errors: [message]
       }
     )
+  end
+
+  defp reading_to_map(reading) do
+    %{
+      id: reading.id,
+      temp: reading.temp,
+    }
+  end
+
+  defp routine_to_map(routine) do
+    %{
+      id: routine.id,
+      target_temp: routine.target_temp,
+    }
   end
 end

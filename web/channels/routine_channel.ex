@@ -2,7 +2,7 @@ defmodule BioMonitor.RoutineChannel do
   use Phoenix.Channel
   intercept(["update", "alert", "started", "finished"])
 
-  def join("routine:updates", _payload, socket) do
+  def join("routine", _payload, socket) do
     {:ok, socket}
   end
 
