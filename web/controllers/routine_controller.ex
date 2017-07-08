@@ -66,6 +66,7 @@ defmodule BioMonitor.RoutineController do
     case BioMonitor.RoutineMonitor.is_running?() do
       {:ok, false} ->
         BioMonitor.RoutineMonitor.start_routine(routine)
+        render(conn, "show.json", routine: routine)
       {:ok, true} ->
         conn
         |> put_status(:unprocessable_entity)
