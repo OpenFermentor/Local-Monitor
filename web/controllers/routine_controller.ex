@@ -10,24 +10,16 @@ defmodule BioMonitor.RoutineController do
 
   def create(conn, %{"routine" => routine_params}) do
     changeset = Routine.changeset(%Routine{}, routine_params)
-    with {:ok, false} <- BioMonitor.RoutineMonitor.is_running?() do
-      case Repo.insert(changeset) do
-      {:ok, routine} ->
-        BioMonitor.RoutineMonitor.start_routine(routine)
-        conn
-        |> put_status(:created)
-        |> put_resp_header("location", routine_path(conn, :show, routine))
-        |> render("show.json", routine: routine)
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
-      end
-    else
-      _ ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(BioMonitor.RoutineView, "unavailable.json")
+    case Repo.insert(changeset) do
+    {:ok, routine} ->
+      conn
+      |> put_status(:created)
+      |> put_resp_header("location", routine_path(conn, :show, routine))
+      |> render("show.json", routine: routine)
+    {:error, changeset} ->
+      conn
+      |> put_status(:unprocessable_entity)
+      |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
     end
   end
 
@@ -63,14 +55,24 @@ defmodule BioMonitor.RoutineController do
 
   def start(conn, %{"id" => id}) do
     routine = Repo.get!(Routine, id)
-    case BioMonitor.RoutineMonitor.is_running?() do
-      {:ok, false} ->
-        BioMonitor.RoutineMonitor.start_routine(routine)
-        render(conn, "show.json", routine: routine)
+    with running = BioMonitor.RoutineMonitor.is_running?(),
+      {:ok, false} <- running,
+      :ok <- BioMonitor.RoutineMonitor.start_routine(routine)
+    do
+      render(conn, "show.json", routine: routine)
+    else
+      {:error, _, message} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.ErrorView, "error.json", message: message)
       {:ok, true} ->
         conn
         |> put_status(:unprocessable_entity)
         |> render(BioMonitor.RoutineView, "unavailable.json")
+      _ ->
+        conn
+        |> put_status(500)
+        |> render(BioMonitor.RoutineView, "500.json")
     end
   end
 end

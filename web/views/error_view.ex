@@ -5,6 +5,10 @@ defmodule BioMonitor.ErrorView do
     %{errors: %{detail: "Page not found"}}
   end
 
+  def render("error.json", %{message: message}) do
+    %{error: message}
+  end
+
   def render("500.json", _assigns) do
     %{errors: %{detail: "Internal server error"}}
   end
