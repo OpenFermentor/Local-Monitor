@@ -44,6 +44,7 @@ defmodule BioMonitor.Mixfile do
       {:faker, "~> 0.8",  only: [:dev, :test]},
       {:credo, "~> 0.8", only: [:dev, :test], runtime: false},
       {:nerves_uart, "~> 0.1"},
+      {:csv, "~> 2.0.0"},
     ]
   end
 

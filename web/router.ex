@@ -12,6 +12,7 @@ defmodule BioMonitor.Router do
     post "/routines/start", RoutineController, :start
     resources "/routines", RoutineController, except: [:new, :edit] do
       resources "/readings", ReadingController, except: [:new, :edit, :update]
+      get "/to_csv", RoutineController, :to_csv
     end
   end
 end
