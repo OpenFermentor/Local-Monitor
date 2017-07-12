@@ -4,7 +4,7 @@
       name: "default",
       files: %{
         included: ["lib/", "src/", "web/", "apps/"],
-        excluded: []
+        excluded: ["deps/"]
       },
       checks: [
         {Credo.Check.Consistency.TabsOrSpaces},

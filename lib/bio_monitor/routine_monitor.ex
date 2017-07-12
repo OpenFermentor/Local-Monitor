@@ -20,11 +20,11 @@ defmodule BioMonitor.RoutineMonitor do
   alias BioMonitor.SensorManager
 
   # User API
-  def start_link() do
+  def start_link do
     start_server()
   end
 
-  def start_server() do
+  def start_server do
     GenServer.start_link(__MODULE__, :ok, [name: @name])
   end
 
@@ -32,7 +32,7 @@ defmodule BioMonitor.RoutineMonitor do
     GenServer.call(@name, {:start, routine})
   end
 
-  def stop_routine() do
+  def stop_routine do
     GenServer.call(@name, :stop)
   end
 
@@ -111,7 +111,7 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   # Helpers
-  defp schedule_work() do
+  defp schedule_work do
     Process.send_after(self(), :loop, @reading_interval)
   end
 

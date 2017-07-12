@@ -3,7 +3,7 @@ defmodule BioMonitor do
   @moduledoc"""
     Starting point for the application.
   """
-
+  alias BioMonitor.Endpoint
   alias BioMonitor.SensorManager
 
   # See http://elixir-lang.org/docs/stable/elixir/Application.html
@@ -17,7 +17,8 @@ defmodule BioMonitor do
       supervisor(BioMonitor.Repo, []),
       # Start the endpoint when the application starts
       supervisor(BioMonitor.Endpoint, []),
-      # Start your own worker by calling: BioMonitor.Worker.start_link(arg1, arg2, arg3)
+      # Start your own worker by calling:
+      # BioMonitor.Worker.start_link(arg1, arg2, arg3)
       worker(BioMonitor.RoutineMonitor, []),
       worker(BioMonitor.SerialMonitor, [[name: SensorManager.arduino_gs_id()]]),
     ]
@@ -31,7 +32,7 @@ defmodule BioMonitor do
   # Tell Phoenix to update the endpoint configuration
   # whenever the application is updated.
   def config_change(changed, _new, removed) do
-    BioMonitor.Endpoint.config_change(changed, removed)
+    Endpoint.config_change(changed, removed)
     :ok
   end
 end

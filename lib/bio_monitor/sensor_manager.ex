@@ -13,16 +13,22 @@ defmodule BioMonitor.SensorManager do
   """
   def arduino_gs_id, do: @arduino_gs
 
-
   @doc """
     Adds all sensors specified in the config file to the
     SerialMonitor.
   """
-  def start_sensors() do
-    with sensor_specs = Application.get_env(:bio_monitor, BioMonitor.SensorManager),
+  def start_sensors do
+    with sensor_specs = Application.get_env(
+        :bio_monitor,
+        BioMonitor.SensorManager
+      ),
       false <- sensor_specs == nil,
       arduino_spec <- process_specs(sensor_specs[:arduino]),
-      :ok <- SerialMonitor.set_port(@arduino_gs, arduino_spec.port, arduino_spec.speed)
+      :ok <- SerialMonitor.set_port(
+          @arduino_gs,
+          arduino_spec.port,
+          arduino_spec.speed
+        )
     do
       #Register sensors here.
       SerialMonitor.add_sensors(@arduino_gs, arduino_spec[:sensors])
@@ -38,7 +44,7 @@ defmodule BioMonitor.SensorManager do
   @doc """
     Fetchs all readings from the SerialMonitors and parse them.
   """
-  def get_readings() do
+  def get_readings do
     with {:ok, arduino_readings} <- SerialMonitor.get_readings(@arduino_gs),
       {temp, _} <- Float.parse(arduino_readings[:temp])
     do
@@ -72,7 +78,6 @@ defmodule BioMonitor.SensorManager do
         {:error, "No sensor matches any port"}
     end
   end
-
 
   #Procesess the keyword list returned from the config file to a
   #list of maps to send to the SerialMonitor with the following format:
