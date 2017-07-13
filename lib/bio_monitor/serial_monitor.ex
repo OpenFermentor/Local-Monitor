@@ -5,6 +5,8 @@ defmodule BioMonitor.SerialMonitor do
     The SerialMonitor is in charge of the serial communication with the sensors
   """
 
+  alias Nerves.UART
+
   @read_delay_ms 30_000
   @new_line "\n"
   @end_reading "\r\n"
@@ -104,7 +106,7 @@ defmodule BioMonitor.SerialMonitor do
   }
   """
   def init(:ok) do
-    {:ok, pid} = Nerves.UART.start_link
+    {:ok, pid} = UART.start_link
     {:ok, %{serial_pid: pid, port: %{}, sensors: []}}
   end
 
@@ -113,7 +115,7 @@ defmodule BioMonitor.SerialMonitor do
   such as manufacter id, etc.
   """
   def handle_call(:get_ports, _from, state) do
-    {:reply, {:ok, Nerves.UART.enumerate}, state}
+    {:reply, {:ok, UART.enumerate}, state}
   end
 
   @doc """
@@ -164,8 +166,12 @@ defmodule BioMonitor.SerialMonitor do
   Sends the `command` to to the device
   """
   def handle_call({:send_command, %{command: command}}, _from, state) do
-    result = Nerves.UART.write(state.serial_pid, command)
-    {:reply, (if result == :ok, do: result, else: {:error, @error_sending_command}), state}
+    result = UART.write(state.serial_pid, command)
+    {
+      :reply,
+      (if result == :ok, do: result, else: {:error, @error_sending_command}),
+      state
+    }
   end
 
   # Opens the connection to the device in the given port
@@ -174,7 +180,7 @@ defmodule BioMonitor.SerialMonitor do
   # port: The port where the device is located
   # speed: The speed of the serial port
   defp open_connection(uart_pid, port, speed) do
-    Nerves.UART.open(uart_pid, port, speed: speed, active: false)
+    UART.open(uart_pid, port, speed: speed, active: false)
   end
 
   # Returns the readings for the registered sensors
@@ -190,7 +196,7 @@ defmodule BioMonitor.SerialMonitor do
   defp get_sensor_readings(state) do
     state.sensors
       |> Enum.map(fn {sensor, read_command} ->
-          _ = Nerves.UART.write(state.serial_pid, read_command)
+          _ = UART.write(state.serial_pid, read_command)
           {sensor, state |> get_sensor_reading |> parse_reading}
          end)
   end
@@ -205,7 +211,7 @@ defmodule BioMonitor.SerialMonitor do
   # or
   # :error
   defp get_sensor_reading(state) do
-    case Nerves.UART.read(state.serial_pid, @read_delay_ms) do
+    case UART.read(state.serial_pid, @read_delay_ms) do
       {:ok, value} ->
         unless is_binary(value) && String.valid?(value) do
           :error

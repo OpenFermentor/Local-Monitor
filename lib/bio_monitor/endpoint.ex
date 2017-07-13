@@ -36,5 +36,7 @@ defmodule BioMonitor.Endpoint do
     key: "_bio_monitor_key",
     signing_salt: "NNfO/QkE"
 
+  plug CORSPlug
+
   plug BioMonitor.Router
 end
