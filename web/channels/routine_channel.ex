@@ -1,4 +1,9 @@
 defmodule BioMonitor.RoutineChannel do
+  @moduledoc """
+    Channel used to broadcast all updates for the sensors status.
+     * Sensor status updates.
+     * Errors.
+  """
   use Phoenix.Channel
   intercept(["update", "alert", "started", "finished"])
 
