@@ -173,6 +173,10 @@ defmodule BioMonitor.RoutineMonitor do
     end
   end
 
+  defp process_reading(:ok, _routine) do
+    IO.puts("No reading detected.")
+  end
+
   defp process_reading({:ok, reading}, routine) do
     IO.puts(
       "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
