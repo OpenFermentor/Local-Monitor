@@ -12,6 +12,10 @@ defmodule BioMonitor.RoutineMonitor do
   @stopped_msg "stopped"
   @update_msg "update"
   @alert_msg "alert"
+  @sensors_channel "sensors"
+  @status_msg "status"
+  @error_msg "error"
+  @uknown_sensor_error "Uknown error while getting sensor status, please check the boards connections"
 
   alias BioMonitor.Endpoint
   alias BioMonitor.Routine
@@ -46,6 +50,16 @@ defmodule BioMonitor.RoutineMonitor do
 
   # GenServer Callbacks
   def init(:ok) do
+    case SensorManager.start_sensors() do
+      {:ok, _message} ->
+        schedule_work()
+      {:error, message} ->
+        Endpoint.broadcast(
+          @sensors_channel,
+          @error_msg,
+          %{message: @uknown_sensor_error}
+        )
+    end
     {:ok, %{:loop => false, :routine => %{}}}
   end
 
@@ -94,7 +108,8 @@ defmodule BioMonitor.RoutineMonitor do
         |> process_reading(routine)
         schedule_work()
       false ->
-        IO.puts 'Loop stopped'
+        get_sensors_status()
+        schedule_work()
     end
     {:noreply, state}
   end
@@ -115,6 +130,29 @@ defmodule BioMonitor.RoutineMonitor do
     Process.send_after(self(), :loop, @reading_interval)
   end
 
+  defp get_sensors_status do
+    case SensorManager.get_readings()  do
+      {:ok, data} ->
+        Endpoint.broadcast(
+          @sensors_channel,
+          @status_msg,
+          data
+        )
+      {:error, message} ->
+        Endpoint.broadcast(
+          @sensors_channel,
+          @error_msg,
+          %{message: message}
+        )
+      _ ->
+        Endpoint.broadcast(
+          @sensors_channel,
+          @error_msg,
+          %{message: @uknown_sensor_error}
+        )
+    end
+  end
+
   defp fetch_reading(routine_id) do
     IO.puts 'Fetching reading from sensors.'
     with {:ok, data} <- SensorManager.get_readings() do
@@ -133,6 +171,10 @@ defmodule BioMonitor.RoutineMonitor do
       {:error, message} -> register_error(message)
       _ -> register_error("Unexpected error")
     end
+  end
+
+  defp process_reading(:ok, _routine) do
+    IO.puts("No reading detected.")
   end
 
   defp process_reading({:ok, reading}, routine) do
@@ -172,6 +214,7 @@ defmodule BioMonitor.RoutineMonitor do
     %{
       id: reading.id,
       temp: reading.temp,
+      inserted_at: reading.inserted_at
     }
   end
 
@@ -179,6 +222,7 @@ defmodule BioMonitor.RoutineMonitor do
     %{
       id: routine.id,
       target_temp: routine.target_temp,
+      inserted_at: routine.inserted_at
     }
   end
 end
