@@ -14,7 +14,7 @@
         {Credo.Check.Design.AliasUsage, priority: :low},
 
         # For others you can also set parameters
-        {Credo.Check.Readability.MaxLineLength, priority: :low, max_length: 80},
+        {Credo.Check.Readability.MaxLineLength, priority: :low, max_length: 100},
 
         # You can also customize the exit_status of each check.
         # If you don't want TODO comments to cause `mix credo` to fail, just

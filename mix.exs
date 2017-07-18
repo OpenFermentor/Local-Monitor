@@ -46,6 +46,7 @@ defmodule BioMonitor.Mixfile do
       {:nerves_uart, "~> 0.1"},
       {:csv, "~> 2.0.0"},
       {:cors_plug, "~> 1.2"},
+      {:phoenix_channel_client, "~> 0.2.0"},
     ]
   end
 

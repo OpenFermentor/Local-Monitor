@@ -30,6 +30,10 @@ config :bio_monitor, BioMonitor.SensorManager,
     sensors: [temp: "getTemp"]
   ]
 
+config :bio_monitor, BioMonitor.SyncSocket,
+  url: "ws://localhost:4000/socket/websocket",
+  serializer: Poison
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{Mix.env}.exs"
