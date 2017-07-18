@@ -187,8 +187,8 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts(
       "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
     )
-    Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading))
-    SyncServer.send(@update_msg, reading_to_map(reading))
+    Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading, routine))
+    SyncServer.send(@update_msg, reading_to_map(reading, routine))
   end
 
   defp process_reading({:error, changeset}, routine) do
@@ -231,8 +231,9 @@ defmodule BioMonitor.RoutineMonitor do
     )
   end
 
-  defp reading_to_map(reading) do
+  defp reading_to_map(reading, routine) do
     %{
+      routine_id: routine.id,
       id: reading.id,
       temp: reading.temp,
       inserted_at: reading.inserted_at

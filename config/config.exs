@@ -25,7 +25,7 @@ config :logger, :console,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    port: "/dev/cu.wchusbserial1410",
+    port: "/dev/cu.SLAB_USBtoUART",
     speed: 9600,
     sensors: [temp: "getTemp"]
   ]
