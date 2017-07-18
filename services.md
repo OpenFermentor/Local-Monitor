@@ -183,7 +183,7 @@ Called when a new reading is recorded
 * Event: `update`
 * Payload:
 ```json
-  {"id": "reading.id", "temp": "reading.temp"}
+  {"id": "routine.id", "temp": "reading.temp"}
 ```
 
 ###### Alert
@@ -192,4 +192,21 @@ Called when an alert is issued after processing a reading
 * Payload:
 ```json
   {"message": "message", "errors": ["error1", "errorN"]}
+```
+#### Sensors
+
+###### status
+Called when the sensor status is checked
+* Event: `status`
+* Payload:
+```json
+  {"temp": "temp"}
+```
+
+###### error
+Called when there is an error with the sensors
+* Event: `error`
+* Payload:
+```json
+  {"message": "message"}
 ```
