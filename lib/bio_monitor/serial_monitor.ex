@@ -7,7 +7,7 @@ defmodule BioMonitor.SerialMonitor do
 
   alias Nerves.UART
 
-  @read_delay_ms 30_000
+  @read_delay_ms 2_000
   @new_line "\n"
   @end_reading "\r\n"
 
@@ -82,6 +82,10 @@ defmodule BioMonitor.SerialMonitor do
     GenServer.call(pid, {:send_command, %{command: command}})
   end
 
+  def clean_serial(pid) do
+    GenServer.call(pid, :clean_serial)
+  end
+
   @doc """
   State structure:
   %{
@@ -125,8 +129,13 @@ defmodule BioMonitor.SerialMonitor do
   speed: The speed of the serial port
   """
   def handle_call({:set_port, %{name: name, speed: speed}}, _from, state) do
-    result = open_connection state.serial_pid, name, speed
-    {:reply, result, %{state | port: %{name: name, speed: speed}}}
+    case result = open_connection state.serial_pid, name, speed do
+      :ok ->
+        clean_serial_port(state.serial_pid)
+        {:reply, result, %{state | port: %{name: name, speed: speed}}}
+      _ ->
+        {:reply, result, %{state | port: %{name: name, speed: speed}}}
+    end
   end
 
   @doc """
@@ -172,6 +181,11 @@ defmodule BioMonitor.SerialMonitor do
       (if result == :ok, do: result, else: {:error, @error_sending_command}),
       state
     }
+  end
+
+  def handle_call(:clean_serial, _from, state) do
+    clean_serial_port(state.serial_pid)
+    {:reply, :ok, state}
   end
 
   # Opens the connection to the device in the given port
@@ -251,5 +265,16 @@ defmodule BioMonitor.SerialMonitor do
   defp is_reading_error(reading) do
     errors = [@unrecognized_command, @wrong_argunment, @generic_error]
     Enum.any?(errors, fn(e) -> String.contains? reading, e end)
+  end
+
+  defp clean_serial_port(pid) do
+    case UART.read(pid, @read_delay_ms) do
+      {:ok, ""} -> :ok
+      {:ok, value} ->
+        IO.puts("=======================")
+        IO.puts(value)
+        clean_serial_port(pid)
+      {:error, _} -> :ok
+    end
   end
 end

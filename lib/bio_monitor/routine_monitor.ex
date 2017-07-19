@@ -22,6 +22,7 @@ defmodule BioMonitor.RoutineMonitor do
   alias BioMonitor.Reading
   alias BioMonitor.Repo
   alias BioMonitor.SensorManager
+  alias BioMonitor.SyncServer
 
   # User API
   def start_link do
@@ -53,12 +54,13 @@ defmodule BioMonitor.RoutineMonitor do
     case SensorManager.start_sensors() do
       {:ok, _message} ->
         schedule_work()
-      {:error, message} ->
+      {:error, _message} ->
         Endpoint.broadcast(
           @sensors_channel,
           @error_msg,
           %{message: @uknown_sensor_error}
         )
+        SyncServer.send(@error_msg, @uknown_sensor_error)
     end
     {:ok, %{:loop => false, :routine => %{}}}
   end
@@ -75,6 +77,7 @@ defmodule BioMonitor.RoutineMonitor do
               @started_msg,
               %{message: "Started routine", routine: routine_to_map(routine)}
             )
+            SyncServer.send(@started_msg, routine_to_map(routine))
             schedule_work()
             {:reply, :ok, %{:loop => true, :routine => routine}}
           {:error, message} ->
@@ -138,18 +141,21 @@ defmodule BioMonitor.RoutineMonitor do
           @status_msg,
           data
         )
+        SyncServer.send(@status_msg, data)
       {:error, message} ->
         Endpoint.broadcast(
           @sensors_channel,
           @error_msg,
           %{message: message}
         )
+        SyncServer.send(@error_msg, %{message: message})
       _ ->
         Endpoint.broadcast(
           @sensors_channel,
           @error_msg,
           %{message: @uknown_sensor_error}
         )
+        SyncServer.send(@error_msg, %{message: @uknown_sensor_error})
     end
   end
 
@@ -181,13 +187,21 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts(
       "Processing new reading for routine #{routine.id} temperature is: #{reading.temp}"
     )
-    Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading))
+    Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading, routine))
+    SyncServer.send(@update_msg, reading_to_map(reading, routine))
   end
 
   defp process_reading({:error, changeset}, routine) do
     IO.puts("Changeset error for #{routine.id}")
     Endpoint.broadcast(
       @channel,
+      @alert_msg,
+      %{
+        message: "Error while saving the reading",
+        errors: changeset.errors
+      }
+    )
+    SyncServer.send(
       @alert_msg,
       %{
         message: "Error while saving the reading",
@@ -208,10 +222,18 @@ defmodule BioMonitor.RoutineMonitor do
         errors: [message]
       }
     )
+    SyncServer.send(
+      @alert_msg,
+      %{
+        message: "Error while saving the reading",
+        errors: [message]
+      }
+    )
   end
 
-  defp reading_to_map(reading) do
+  defp reading_to_map(reading, routine) do
     %{
+      routine_id: routine.id,
       id: reading.id,
       temp: reading.temp,
       inserted_at: reading.inserted_at

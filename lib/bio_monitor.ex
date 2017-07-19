@@ -12,6 +12,7 @@ defmodule BioMonitor do
     children = [
       supervisor(BioMonitor.Repo, []),
       supervisor(BioMonitor.Endpoint, []),
+      worker(BioMonitor.SyncServer, []),
       worker(BioMonitor.SerialMonitor, [[name: SensorManager.arduino_gs_id()]]),
       worker(BioMonitor.RoutineMonitor, []),
     ]

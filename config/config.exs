@@ -25,10 +25,14 @@ config :logger, :console,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    port: "/dev/cu.wchusbserial1410",
+    port: "/dev/cu.SLAB_USBtoUART",
     speed: 9600,
     sensors: [temp: "getTemp"]
   ]
+
+config :bio_monitor, BioMonitor.SyncSocket,
+  url: "ws://localhost:4000/socket/websocket",
+  serializer: Poison
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
