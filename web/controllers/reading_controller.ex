@@ -20,8 +20,6 @@ defmodule BioMonitor.ReadingController do
         |> put_status(500)
         |> render(BioMonitor.ErrorView, "500.json")
     end
-
-
   end
 
   def create(conn, %{"routine_id" => routine_id, "reading" => reading_params}) do

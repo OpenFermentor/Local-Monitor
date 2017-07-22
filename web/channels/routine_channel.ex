@@ -5,7 +5,7 @@ defmodule BioMonitor.RoutineChannel do
      * Errors.
   """
   use Phoenix.Channel
-  intercept(["update", "alert", "started", "finished"])
+  intercept(["update", "alert", "started", "stopped"])
 
   def join("routine", _payload, socket) do
     {:ok, socket}
@@ -27,8 +27,8 @@ defmodule BioMonitor.RoutineChannel do
     {:noreply, socket}
   end
 
-  def handle_out("finished", payload, socket) do
-    push socket, "routine_finished", payload
+  def handle_out("stopped", payload, socket) do
+    push socket, "stopped", payload
     {:noreply, socket}
   end
 end

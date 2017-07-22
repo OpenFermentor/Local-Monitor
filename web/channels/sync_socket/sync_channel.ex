@@ -6,8 +6,9 @@ defmodule BioMonitor.SyncChannel do
   use PhoenixChannelClient
 
   @started_msg "start"
-  @stopped_msg "stop"
+  @stopped_msg "stopped"
   @update_msg "update"
+  @alert_msg "alert"
 
   def handle_in(@started_msg, _payload, state) do
     IO.puts("Started routine")
