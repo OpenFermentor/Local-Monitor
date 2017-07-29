@@ -11,15 +11,15 @@ defmodule BioMonitor.RoutineController do
   def create(conn, %{"routine" => routine_params}) do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
-    {:ok, routine} ->
-      conn
-      |> put_status(:created)
-      |> put_resp_header("location", routine_path(conn, :show, routine))
-      |> render("show.json", routine: routine)
-    {:error, changeset} ->
-      conn
-      |> put_status(:unprocessable_entity)
-      |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
+      {:ok, routine} ->
+        conn
+        |> put_status(:created)
+        |> put_resp_header("location", routine_path(conn, :show, routine))
+        |> render("show.json", routine: routine)
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
     end
   end
 
