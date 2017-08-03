@@ -97,6 +97,10 @@ defmodule BioMonitor.SyncChannel do
     end
   end
 
+  def handle_reply({:ok, "sync", _payload, _ref}, state) do
+    {:noreply, state}
+  end
+
   def handle_reply({:ok, :join, _payload, _ref}, state) do
     IO.puts("Successfuly joined channel")
     {:noreply, state}
