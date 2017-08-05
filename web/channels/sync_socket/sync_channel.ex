@@ -121,6 +121,11 @@ defmodule BioMonitor.SyncChannel do
     {:noreply, state}
   end
 
+  def handle_reply(_, state) do
+    IO.puts("Uknown reply from cloud backend sync channel")
+    {:noreply, state}
+  end
+
   def handle_close(_reason, state) do
     IO.puts("Channel closed")
     {:noreply, state}
