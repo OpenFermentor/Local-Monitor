@@ -9,12 +9,14 @@ defmodule BioMonitor.SyncChannel do
   alias BioMonitor.Repo
   alias BioMonitor.RoutineMonitor
   alias BioMonitor.Routine
+  alias BioMonitor.SyncServer
 
   @started_msg "start"
   @stopped_msg "stopped"
   @new_routine_msg "new_routine"
   @update_routine_msg "update_routine"
   @delete_routine_msg "delete_routine"
+  @crud_error "crud_error"
 
   @doc """
     Handler for remote routine start.
@@ -63,7 +65,7 @@ defmodule BioMonitor.SyncChannel do
       {:noreply, state}
     else
       {:error, _changeset} ->
-        IO.puts("Error while updating routine")
+        SyncServer.send(@crud_error, "Error while updating routine")
         {:noreply, state}
     end
     {:noreply, state}
@@ -79,6 +81,7 @@ defmodule BioMonitor.SyncChannel do
       {:noreply, state}
     else
       _ ->
+        SyncServer.send(@crud_error, "Failed to delete routine")
         IO.puts("Failed to delete routine")
         {:noreply, state}
     end
@@ -93,6 +96,7 @@ defmodule BioMonitor.SyncChannel do
         {:noreply, state}
       {:error, _changeset} ->
         IO.puts("Failed to create routine.")
+        SyncServer.send(@crud_error, "Failed to create routine")
         {:noreply, state}
     end
   end
@@ -118,6 +122,11 @@ defmodule BioMonitor.SyncChannel do
 
   def handle_reply({:timeout, message, _ref}, state) do
     IO.puts("Message #{message} Timed out.")
+    {:noreply, state}
+  end
+
+  def handle_reply(_, state) do
+    IO.puts("Uknown reply from cloud backend sync channel")
     {:noreply, state}
   end
 
