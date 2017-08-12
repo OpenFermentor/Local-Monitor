@@ -55,48 +55,41 @@ defmodule BioMonitor.SyncChannel do
   end
 
   def handle_in(@update_routine_msg, routine_params, state) do
-    IO.puts("New update for routine id #{routine_params.id}")
     with routine = Repo.get(Routine, routine_params.id),
       true <- routine != nil,
       changeset = Routine.changeset(routine, routine_params),
       {:ok, routine} <- Repo.update(changeset)
     do
-      IO.puts("Successfuly updated routine with id #{routine.id}")
       {:noreply, state}
     else
       {:error, _changeset} ->
-        SyncServer.send(@crud_error, "Error while updating routine")
+        SyncServer.send(@crud_error, %{message: "Error while updating routine"})
         {:noreply, state}
     end
     {:noreply, state}
   end
 
   def handle_in(@delete_routine_msg, %{"id" => id}, state) do
-    IO.puts("Delete routine with id #{id}")
     with routine = Repo.get!(Routine, id),
       true <- routine != nil,
       {:ok, struct} <- Repo.delete(routine)
     do
-      IO.puts("Successfuly deleted routine with id #{struct.id}")
       {:noreply, state}
     else
       _ ->
-        SyncServer.send(@crud_error, "Failed to delete routine")
+        SyncServer.send(@crud_error, %{message: "Failed to delete routine"})
         IO.puts("Failed to delete routine")
         {:noreply, state}
     end
   end
 
   def handle_in(@new_routine_msg, routine_params, state) do
-    IO.puts("New routine #{routine_params.title}")
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
-        IO.puts("Successfuly saved routine #{routine.id}")
         {:noreply, state}
       {:error, _changeset} ->
-        IO.puts("Failed to create routine.")
-        SyncServer.send(@crud_error, "Failed to create routine")
+        SyncServer.send(@crud_error, %{message: "Failed to create routine"})
         {:noreply, state}
     end
   end
