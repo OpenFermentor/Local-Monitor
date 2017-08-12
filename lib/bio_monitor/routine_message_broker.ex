@@ -21,7 +21,7 @@ defmodule BioMonitor.RoutineMessageBroker do
         @error_msg,
         %{message: message}
       )
-    SyncServer.send(@error_msg, message)
+    SyncServer.send(@error_msg, %{message: message})
   end
 
   def send_routine_error(message) do
@@ -30,7 +30,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{message: message}
     )
-    SyncServer.send(@alert_msg, message)
+    SyncServer.send(@alert_msg, %{message: message})
   end
 
   def send_start(routine) do

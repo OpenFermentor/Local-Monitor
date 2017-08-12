@@ -116,9 +116,9 @@ defmodule BioMonitor.RoutineMonitor do
       {:ok, data} ->
         Broker.send_status(data)
       {:error, message} ->
-        Broker.send_status_error(message)
+        Broker.send_sensor_error(message)
       _ ->
-        Broker.send_status_error(@uknown_sensor_error)
+        Broker.send_sensor_error(@uknown_sensor_error)
     end
   end
 
