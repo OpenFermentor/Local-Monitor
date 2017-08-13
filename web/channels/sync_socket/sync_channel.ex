@@ -55,10 +55,10 @@ defmodule BioMonitor.SyncChannel do
   end
 
   def handle_in(@update_routine_msg, routine_params, state) do
-    with routine = Repo.get(Routine, routine_params.id),
+    with routine = Repo.get_by(Routine, uuid: routine_params.uuid),
       true <- routine != nil,
       changeset = Routine.changeset(routine, routine_params),
-      {:ok, routine} <- Repo.update(changeset)
+      {:ok, _routine} <- Repo.update(changeset)
     do
       {:noreply, state}
     else
@@ -69,10 +69,10 @@ defmodule BioMonitor.SyncChannel do
     {:noreply, state}
   end
 
-  def handle_in(@delete_routine_msg, %{"id" => id}, state) do
-    with routine = Repo.get!(Routine, id),
+  def handle_in(@delete_routine_msg, %{"uuid" => uuid}, state) do
+    with routine = Repo.get_by!(Routine, uuid: uuid),
       true <- routine != nil,
-      {:ok, struct} <- Repo.delete(routine)
+      {:ok, _struct} <- Repo.delete(routine)
     do
       {:noreply, state}
     else
@@ -86,7 +86,7 @@ defmodule BioMonitor.SyncChannel do
   def handle_in(@new_routine_msg, routine_params, state) do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
-      {:ok, routine} ->
+      {:ok, _routine} ->
         {:noreply, state}
       {:error, _changeset} ->
         SyncServer.send(@crud_error, %{message: "Failed to create routine"})

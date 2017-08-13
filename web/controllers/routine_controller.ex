@@ -2,6 +2,7 @@ defmodule BioMonitor.RoutineController do
   use BioMonitor.Web, :controller
 
   alias BioMonitor.Routine
+  alias BioMonitor.SyncServer
 
   def index(conn, _params) do
     routine = Repo.all(Routine)
@@ -12,6 +13,7 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
+        SyncServer.send("new_routine", Map.put(routine_params, :uuid, routine.uuid))
         conn
         |> put_status(:created)
         |> put_resp_header("location", routine_path(conn, :show, routine))
@@ -34,6 +36,7 @@ defmodule BioMonitor.RoutineController do
 
     case Repo.update(changeset) do
       {:ok, routine} ->
+        SyncServer.send("update_routine", Map.put(routine_params, :uuid, routine.uuid))
         render(conn, "show.json", routine: routine)
       {:error, changeset} ->
         conn
@@ -45,6 +48,7 @@ defmodule BioMonitor.RoutineController do
   def delete(conn, %{"id" => id}) do
     routine = Repo.get!(Routine, id)
     Repo.delete!(routine)
+    SyncServer.send("update_routine", %{"uuid" => routine.uuid})
     send_resp(conn, :no_content, "")
   end
 
