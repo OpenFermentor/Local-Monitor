@@ -18,7 +18,9 @@ defmodule BioMonitor.RoutineControllerTest do
   test "shows chosen resource", %{conn: conn} do
     routine = Repo.insert! Routine.changeset(%Routine{}, @valid_attrs)
     conn = get conn, routine_path(conn, :show, routine)
-    assert json_response(conn, 200)["data"] == %{"id" => routine.id,
+    assert json_response(conn, 200)["data"] == %{
+      "id" => routine.id,
+      "uuid" => routine.uuid,
       "title" => routine.title,
       "strain" => routine.strain,
       "medium" => routine.medium,

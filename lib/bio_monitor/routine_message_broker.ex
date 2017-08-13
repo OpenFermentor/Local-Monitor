@@ -104,6 +104,7 @@ defmodule BioMonitor.RoutineMessageBroker do
   defp reading_to_map(reading, routine) do
     %{
       routine_id: routine.id,
+      routine_uuid: routine.uuid,
       id: reading.id,
       temp: reading.temp,
       inserted_at: reading.inserted_at
@@ -113,6 +114,7 @@ defmodule BioMonitor.RoutineMessageBroker do
   defp routine_to_map(routine) do
     %{
       id: routine.id,
+      uuid: routine.uuid,
       target_temp: routine.target_temp,
       inserted_at: routine.inserted_at
     }

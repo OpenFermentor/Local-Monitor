@@ -10,7 +10,9 @@ defmodule BioMonitor.RoutineView do
   end
 
   def render("routine.json", %{routine: routine}) do
-    %{id: routine.id,
+    %{
+      id: routine.id,
+      uuid: routine.uuid,
       title: routine.title,
       strain: routine.strain,
       medium: routine.medium,

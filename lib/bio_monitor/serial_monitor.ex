@@ -270,9 +270,7 @@ defmodule BioMonitor.SerialMonitor do
   defp clean_serial_port(pid) do
     case UART.read(pid, @read_delay_ms) do
       {:ok, ""} -> :ok
-      {:ok, value} ->
-        IO.puts("=======================")
-        IO.puts(value)
+      {:ok, _value} ->
         clean_serial_port(pid)
       {:error, _} -> :ok
     end

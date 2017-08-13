@@ -9,6 +9,7 @@ defmodule BioMonitor.RoutineTest do
   test "changeset with valid attributes" do
     changeset = Routine.changeset(%Routine{}, @valid_attrs)
     assert changeset.valid?
+    assert changeset.changes[:uuid] != nil
   end
 
   test "changeset with invalid attributes" do
