@@ -123,7 +123,6 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   defp fetch_reading(routine_id) do
-    IO.puts 'Fetching reading from sensors.'
     with {:ok, data} <- SensorManager.get_readings() do
       with routine = Repo.get(Routine, routine_id),
         true <- routine != nil,

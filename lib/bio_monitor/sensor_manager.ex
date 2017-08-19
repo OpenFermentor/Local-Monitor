@@ -42,6 +42,26 @@ defmodule BioMonitor.SensorManager do
   end
 
   @doc """
+    Fetch the ph value from the sensor.
+  """
+  def get_ph do
+    case get_readings() do
+      {:ok, readings} -> {:ok, readings[:ph]}
+      _ -> {:error, "Error while fetching the current ph value"}
+    end
+  end
+
+  @doc """
+    sets the offset of the ph sensor for calibration
+  """
+  def set_ph_offset(offset) do
+    case send_command(:ph, "setPhOffset:#{offset}") do
+      {:ok, _result} -> :ok
+      {:error, message} -> {:error, message}
+    end
+  end
+
+  @doc """
     Fetchs all readings from the SerialMonitors and parse them.
   """
   def get_readings do
