@@ -62,6 +62,14 @@ defmodule BioMonitor.SyncChannel do
     do
       {:noreply, state}
     else
+      false ->
+        changeset = Routine.changeset(%Routine{}, routine_params)
+        case Repo.insert(changeset) do
+          {:ok, _routine} ->
+            {:noreply, state}
+          {:error, _changeset} ->
+            {:noreply, state}
+        end
       {:error, _changeset} ->
         SyncServer.send(@crud_error, %{message: "Error while updating routine"})
         {:noreply, state}
