@@ -3,10 +3,19 @@ defmodule BioMonitor.RoutineController do
 
   alias BioMonitor.Routine
   alias BioMonitor.SyncServer
+  @routines_per_page "10"
 
-  def index(conn, _params) do
-    routine = Repo.all(Routine)
-    render(conn, "index.json", routine: routine)
+  def index(conn, params) do
+    {routines, rummage} =
+      Routine |>
+      Rummage.Ecto.rummage(%{
+        "paginate" => %{
+          "per_page" => @routines_per_page,
+          "page" => "#{params["page"] || 1}"
+        }
+      })
+    routines = Repo.all(routines)
+    render(conn, "index.json", routine: routines, page_info: rummage)
   end
 
   def create(conn, %{"routine" => routine_params}) do
