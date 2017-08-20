@@ -55,7 +55,7 @@ defmodule BioMonitor.SyncChannel do
   end
 
   def handle_in(@update_routine_msg, routine_params, state) do
-    with routine = Repo.get_by(Routine, uuid: routine_params.uuid),
+    with routine = Repo.get_by(Routine, uuid: routine_params["uuid"]),
       true <- routine != nil,
       changeset = Routine.changeset(routine, routine_params),
       {:ok, _routine} <- Repo.update(changeset)
