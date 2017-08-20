@@ -1,8 +1,13 @@
 defmodule BioMonitor.RoutineView do
   use BioMonitor.Web, :view
 
-  def render("index.json", %{routine: routine}) do
-    %{data: render_many(routine, BioMonitor.RoutineView, "routine.json")}
+  def render("index.json", %{routine: routine, page_info: page_info}) do
+    Map.merge(
+      %{
+        data: render_many(routine, BioMonitor.RoutineView, "routine.json")
+      },
+      page_info
+    )
   end
 
   def render("show.json", %{routine: routine}) do

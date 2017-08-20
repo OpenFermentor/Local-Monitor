@@ -1,6 +1,5 @@
 defmodule BioMonitor.Routine do
   use BioMonitor.Web, :model
-
   @moduledoc """
     Model used to define routines.
   """
@@ -35,7 +34,6 @@ defmodule BioMonitor.Routine do
     with true <- changeset.data.uuid == nil,
       true <- Map.get(changeset.params, "uuid") == nil
     do
-      IO.puts("===here====")
       put_change(changeset, :uuid, UUID.uuid1())
     else
       _ -> changeset

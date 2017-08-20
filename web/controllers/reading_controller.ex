@@ -1,15 +1,27 @@
 defmodule BioMonitor.ReadingController do
   use BioMonitor.Web, :controller
 
+  import Ecto.Query
   alias BioMonitor.Reading
   alias BioMonitor.Routine
+  @readings_per_page "30"
 
-  def index(conn, %{"routine_id" => routine_id}) do
+  def index(conn, %{"routine_id" => routine_id} = params) do
     with routine = Repo.get(Routine, routine_id),
       true <- routine != nil
     do
-      routine = Repo.preload routine, :readings
-      render(conn, "index.json", readings: routine.readings)
+      query = from r in Reading,
+        where: r.routine_id == ^routine_id
+      {readings, rummage} =
+        query |>
+        Rummage.Ecto.rummage(%{
+          "paginate" => %{
+            "per_page" => @readings_per_page,
+            "page" => "#{params["page"] || 1}"
+          }
+        })
+      readings = Repo.all(readings)
+      render(conn, "index.json", readings: readings, page_info: rummage)
     else
       false ->
         conn
