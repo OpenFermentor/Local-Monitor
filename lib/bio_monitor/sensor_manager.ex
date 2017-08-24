@@ -66,11 +66,11 @@ defmodule BioMonitor.SensorManager do
   """
   def get_readings do
     with {:ok, arduino_readings} <- SerialMonitor.get_readings(@arduino_gs),
-      temp_reading <- arduino_readings[:temp],
-      true <- temp_reading != nil,
-      {temp, _} <- Float.parse(temp_reading)
+      {:ok, temp} <- parse_reading(arduino_readings[:temp]),
+      {:ok, ph} <- parse_reading(arduino_readings[:ph]),
+      {:ok, density} <- parse_reading(arduino_readings[:density])
     do
-      {:ok, %{temp: temp, ph: 0, co2: 0, density: 0}}
+      {:ok, %{temp: temp, ph: ph, co2: 0, density: density}}
     else
       :error ->
         {:error, "There was an error fetching the readings"}
@@ -118,9 +118,21 @@ defmodule BioMonitor.SensorManager do
     }
   end
 
+  defp parse_reading(reading) do
+    with true <- reading != nil,
+      {parsed_reading, _} <- Float.parse(reading)
+    do
+      {:ok, parsed_reading}
+    else
+      _ -> :error
+    end
+  end
+
   defp gs_name_for_sensor(sensor) do
     case sensor do
       :temp -> {:ok, @arduino_gs}
+      :ph -> {:ok, @arduino_gs}
+      :density -> {:ok, @arduino_gs}
       _ -> :error
     end
   end

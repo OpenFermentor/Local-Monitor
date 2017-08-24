@@ -31,7 +31,11 @@ config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
     port: "/dev/cu.SLAB_USBtoUART",
     speed: 9600,
-    sensors: [temp: "getTemp"]
+    sensors: [
+      temp: "getTemp",
+      ph: "getPh",
+      density: "getTurb"
+    ]
   ]
 
 config :bio_monitor, BioMonitor.SyncSocket,

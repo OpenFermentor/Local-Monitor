@@ -131,6 +131,8 @@ defmodule BioMonitor.RoutineMessageBroker do
       routine_uuid: routine.uuid,
       id: reading.id,
       temp: reading.temp,
+      ph: reading.ph,
+      density: reading.density,
       inserted_at: reading.inserted_at
     }
   end
