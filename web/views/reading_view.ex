@@ -18,6 +18,7 @@ defmodule BioMonitor.ReadingView do
       ph: reading.ph,
       co2: reading.co2,
       density: reading.density,
+      inserted_at: reading.inserted_at,
       routine_id: reading.routine_id}
   end
 end
