@@ -3,6 +3,7 @@ defmodule BioMonitor.ReadingControllerTest do
 
   alias BioMonitor.Routine
   alias BioMonitor.Reading
+  alias Ecto.DateTime, as: DateTime
 
   @routine_valid_attrs %{title: Faker.File.file_name(), estimated_time_seconds: "#{Faker.Commerce.price()}", extra_notes: Faker.File.file_name(), medium: Faker.Beer.name(), strain: Faker.Beer.malt(), target_co2: "#{Faker.Commerce.price()}", target_density: "#{Faker.Commerce.price()}", target_ph: "#{Faker.Commerce.price()}", target_temp: "#{Faker.Commerce.price()}"}
   @valid_attrs %{co2: "120.5", density: "120.5", ph: "120.5", temp: "120.5"}
@@ -31,7 +32,7 @@ defmodule BioMonitor.ReadingControllerTest do
       "ph" => reading.ph,
       "co2" => reading.co2,
       "density" => reading.density,
-      "inserted_at" => reading.inserted_at,
+      "inserted_at" => to_date_string(reading.inserted_at),
       "routine_id" => reading.routine_id}
   end
 
@@ -65,5 +66,10 @@ defmodule BioMonitor.ReadingControllerTest do
     conn = delete conn, routine_reading_path(conn, :delete, routine.id, reading)
     assert response(conn, 204)
     refute Repo.get(Reading, reading.id)
+  end
+
+  defp to_date_string(date) do
+    {:ok, date_time} = date |> DateTime.cast
+    date_time |> DateTime.to_iso8601
   end
 end
