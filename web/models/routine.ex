@@ -1,6 +1,5 @@
 defmodule BioMonitor.Routine do
   use BioMonitor.Web, :model
-
   @moduledoc """
     Model used to define routines.
   """
@@ -26,16 +25,18 @@ defmodule BioMonitor.Routine do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [:title, :strain, :medium, :target_temp, :target_ph, :target_co2, :target_density, :estimated_time_seconds, :extra_notes])
+    |> cast(params, [:title, :strain, :medium, :target_temp, :target_ph, :target_co2, :target_density, :estimated_time_seconds, :extra_notes, :uuid])
     |> validate_required([:title, :strain, :medium, :target_temp, :target_ph, :target_density, :estimated_time_seconds])
     |> generate_uuid
   end
 
   defp generate_uuid(changeset) do
-    case changeset.data.uuid == nil && Map.get(changeset.params, :uuid) == nil do
-      true ->
-        put_change(changeset, :uuid, UUID.uuid1())
-      false -> changeset
+    with true <- changeset.data.uuid == nil,
+      true <- Map.get(changeset.params, "uuid") == nil
+    do
+      put_change(changeset, :uuid, UUID.uuid1())
+    else
+      _ -> changeset
     end
   end
 end

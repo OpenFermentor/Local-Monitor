@@ -1,6 +1,10 @@
 defmodule BioMonitor.RoutineControllerTest do
   use BioMonitor.ConnCase
 
+  @moduledoc """
+    Test cases for RoutineController
+  """
+
   alias BioMonitor.Routine
   alias Ecto.DateTime, as: DateTime
   @valid_attrs %{title: Faker.File.file_name(), estimated_time_seconds: "#{Faker.Commerce.price()}", extra_notes: Faker.File.file_name(), medium: Faker.Beer.name(), strain: Faker.Beer.malt(), target_co2: "#{Faker.Commerce.price()}", target_density: "#{Faker.Commerce.price()}", target_ph: "#{Faker.Commerce.price()}", target_temp: "#{Faker.Commerce.price()}"}
@@ -73,7 +77,7 @@ defmodule BioMonitor.RoutineControllerTest do
   end
 
   defp to_date_string(date) do
-    {:ok, dateTime} = date |> DateTime.cast
-    dateTime |> DateTime.to_iso8601
+    {:ok, date_time} = date |> DateTime.cast
+    date_time |> DateTime.to_iso8601
   end
 end

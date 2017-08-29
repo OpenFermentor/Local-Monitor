@@ -95,14 +95,18 @@ defmodule BioMonitor.RoutineMonitor do
     {:noreply, state}
   end
 
+  def handle_info(_, _state) do
+    IO.puts("Uknown message received.")
+  end
+
   def terminate(reason, _state) do
     case reason do
       :normal ->
-        IO.puts 'Server terminated normally'
-      :shutdown ->
-        IO.puts 'Server shutted down'
+        IO.puts "Server terminated normally"
       _ ->
-        IO.puts 'Uknown error'
+        Broker.send_system_error(
+          "A system error has ocurred and the routine process has stopped, please check the board connections and restart it."
+        )
     end
   end
 
@@ -123,7 +127,6 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   defp fetch_reading(routine_id) do
-    IO.puts 'Fetching reading from sensors.'
     with {:ok, data} <- SensorManager.get_readings() do
       with routine = Repo.get(Routine, routine_id),
         true <- routine != nil,

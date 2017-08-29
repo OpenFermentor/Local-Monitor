@@ -1,5 +1,8 @@
 defmodule BioMonitor.RoutineTest do
   use BioMonitor.ModelCase
+  @moduledoc """
+    Test cases for ph controller
+  """
 
   alias BioMonitor.Routine
 

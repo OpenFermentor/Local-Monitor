@@ -3,14 +3,20 @@ defmodule BioMonitor.RoutineMessageBroker do
     Wrapper module around all channel
     communication for all routine related operations.
   """
+  # Routine channel
   @channel "routine"
   @started_msg "started"
   @stopped_msg "stopped"
   @update_msg "update"
   @alert_msg "alert"
+  # Sensor channel
   @sensors_channel "sensors"
   @status_msg "status"
   @error_msg "error"
+  # "status" code for alert and error topics on routine and sensors channels
+  @routine_error :reading_error
+  @sensor_error :sensor_error
+  @system_error :system_error
 
   alias BioMonitor.Endpoint
   alias BioMonitor.SyncServer
@@ -19,9 +25,23 @@ defmodule BioMonitor.RoutineMessageBroker do
     Endpoint.broadcast(
         @sensors_channel,
         @error_msg,
-        %{message: message}
+        %{status: @sensor_error, message: message}
       )
-    SyncServer.send(@error_msg, %{message: message})
+    SyncServer.send(@error_msg, %{status: @sensor_error, message: message})
+  end
+
+  def send_system_error(message) do
+    Endpoint.broadcast(
+      @channel,
+      @alert_msg,
+      %{status: @system_error, message: message}
+    )
+    Endpoint.broadcast(
+      @sensors_channel,
+      @error_msg,
+      %{status: @system_error, message: message}
+    )
+    SyncServer.send(@alert_msg, %{status: @system_error, message: message})
   end
 
   def send_routine_error(message) do
@@ -30,7 +50,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{message: message}
     )
-    SyncServer.send(@alert_msg, %{message: message})
+    SyncServer.send(@alert_msg, %{status: @routine_error, message: message})
   end
 
   def send_start(routine) do
@@ -70,6 +90,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @channel,
       @alert_msg,
       %{
+        status: @routine_error,
         message: "Error while saving the reading",
         errors: changeset.errors
       }
@@ -77,6 +98,7 @@ defmodule BioMonitor.RoutineMessageBroker do
     SyncServer.send(
       @alert_msg,
       %{
+        status: @routine_error,
         message: "Error while saving the reading",
         errors: changeset.errors
       }
@@ -88,6 +110,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @channel,
       @alert_msg,
       %{
+        status: @routine_error,
         message: "Error while saving the reading",
         errors: [message]
       }
@@ -95,6 +118,7 @@ defmodule BioMonitor.RoutineMessageBroker do
     SyncServer.send(
       @alert_msg,
       %{
+        status: @routine_error,
         message: "Error while saving the reading",
         errors: [message]
       }
@@ -107,6 +131,8 @@ defmodule BioMonitor.RoutineMessageBroker do
       routine_uuid: routine.uuid,
       id: reading.id,
       temp: reading.temp,
+      ph: reading.ph,
+      density: reading.density,
       inserted_at: reading.inserted_at
     }
   end

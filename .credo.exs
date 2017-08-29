@@ -25,7 +25,7 @@
         # Put `false` as second element:
         {Credo.Check.Design.TagFIXME, false},
 
-        # ... several checks omitted for readability ...
+        {Credo.Check.Readability.ModuleDoc, false}
       ]
     }
   ]

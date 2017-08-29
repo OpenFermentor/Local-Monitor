@@ -47,7 +47,8 @@ defmodule BioMonitor.Mixfile do
       {:csv, "~> 2.0.0"},
       {:cors_plug, "~> 1.2"},
       {:phoenix_channel_client, "~> 0.2.0"},
-      {:uuid, "~> 1.1.7"}
+      {:uuid, "~> 1.1.7"},
+      {:rummage_ecto, "~> 1.2.0"}
     ]
   end
 
