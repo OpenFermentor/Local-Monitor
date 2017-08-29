@@ -22,20 +22,12 @@ config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
-config :rummage_ecto,
-  Rummage.Ecto,
-  default_repo: BioMonitor.Repo
-
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
     port: "/dev/cu.SLAB_USBtoUART",
     speed: 9600,
-    sensors: [
-      temp: "getTemp",
-      ph: "getPh",
-      density: "getTurb"
-    ]
+    sensors: [temp: "getTemp"]
   ]
 
 config :bio_monitor, BioMonitor.SyncSocket,
