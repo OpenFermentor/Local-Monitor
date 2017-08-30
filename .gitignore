@@ -3,6 +3,7 @@ deps/
 doc/
 tmp/
 node_modules/
+priv/static/
 .idea/
 
 /installer/_build

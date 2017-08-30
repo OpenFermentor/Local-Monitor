@@ -17,6 +17,16 @@ To run the MonitorBackend follow these steps:
   3. Create the database running `mix ecto.create` you need `PostgreSQL` installed and running on your machine.
   4. Run the server using `mix phoenix.server`
 
+# Release
+To generate a release, use the following command:
+```elixir
+MIX_ENV=prod mix do compile, phoenix.digest, release --env=prod
+```
+
+This will generate the release in the folder: `_build/prod/rel/bio_monitor/bin`
+
+To run the application, execute: `PORT=4000 ./bio_monitor daemon`
+
 # Dependencies
 The following dependencies are used on this project:
   * `Elixir 1.4.2`.
@@ -24,3 +34,4 @@ The following dependencies are used on this project:
   * `Credo` for style code checking.
   * `Faker` for faking data for testing.
   * `Nerves.UART` for communication via serial port with external devices.
+  * `Distillery` for managing releases
