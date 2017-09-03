@@ -2,6 +2,7 @@ defmodule BioMonitor.PhController do
   use BioMonitor.Web, :controller
 
   alias BioMonitor.SensorManager
+  alias BioMonitor.RoutineMonitor
   alias BioMonitor.ErrorView
 
   def current(conn, _params) do
@@ -14,24 +15,46 @@ defmodule BioMonitor.PhController do
         |> put_status(:unprocessable_entity)
         |> render(ErrorView, "error.json", %{message: message})
     end
-
   end
 
-  def set_offset(conn, %{"offset" => offset}) do
-    with :ok <- SensorManager.set_ph_offset(offset),
-      {:ok, ph_value} <- SensorManager.get_ph()
-    do
-      conn
-      |> render("show.json", current_value: ph_value)
-    else
-      {:error, message} ->
+  def calibration_status(conn, _params) do
+    status = RoutineMonitor.ph_cal_status()
+    conn
+    |> render("status.json", status)
+  end
+
+  def set_base(conn, _params) do
+    conn |> start_calibration(10)
+  end
+
+  def set_acid(conn, _params) do
+    conn |> start_calibration(4)
+  end
+
+  def set_neutral(conn, _params) do
+    conn |> start_calibration(7)
+  end
+
+  defp start_calibration(conn, target) do
+    case RoutineMonitor.start_ph_cal(target) do
+      :ok ->
+        conn |> render("cal_started.json")
+      :routine_in_progress ->
         conn
         |> put_status(:unprocessable_entity)
-        |> render(ErrorView, "error.json", %{message: message})
-      _ ->
+        |> render(
+          ErrorView,
+          "error.json",
+          %{message: "No se puede claibrar el sensor mientras este corriendo un experimento"}
+        )
+      :ph_cal_in_progress ->
         conn
-        |> put_status(500)
-        |> render(ErrorView, "500.json")
+        |> put_status(:unprocessable_entity)
+        |> render(
+          ErrorView,
+          "error.json",
+          %{message: "Ya se está calibrando el sensor."}
+        )
     end
   end
 end

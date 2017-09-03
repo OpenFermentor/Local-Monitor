@@ -82,6 +82,10 @@ defmodule BioMonitor.SerialMonitor do
     GenServer.call(pid, {:send_command, %{command: command}})
   end
 
+  def send_and_read(pid, command) do
+    GenServer.call(pid, {:send_and_read, %{command: command}})
+  end
+
   def clean_serial(pid) do
     GenServer.call(pid, :clean_serial)
   end
@@ -181,6 +185,21 @@ defmodule BioMonitor.SerialMonitor do
       (if result == :ok, do: result, else: {:error, @error_sending_command}),
       state
     }
+  end
+
+  def handle_call({:send_and_read, %{command: command}}, _from, state) do
+    case UART.write(state.serial_pid, command) do
+      :ok ->
+        case get_sensor_reading(state) |> parse_reading do
+          {:error, msg} ->
+            {:reply, {:error, msg}, state}
+          value ->
+            {:reply, {:ok, value}, state}
+        end
+      _ ->
+        {:reply, {:error, "Uknown error"}, state}
+    end
+
   end
 
   def handle_call(:clean_serial, _from, state) do
