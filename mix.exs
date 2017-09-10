@@ -22,7 +22,9 @@ defmodule BioMonitor.Mixfile do
   def application do
     [mod: {BioMonitor, []},
      applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
-                    :phoenix_ecto, :postgrex, :faker]]
+                    :cors_plug, :csv, :nerves_uart, :phoenix_channel_client,
+                    :rummage_ecto, :uuid, :phoenix_ecto, :postgrex,
+                    :elixir_make, :websocket_client]]
   end
 
   # Specifies which paths to compile per environment.
@@ -48,7 +50,8 @@ defmodule BioMonitor.Mixfile do
       {:cors_plug, "~> 1.2"},
       {:phoenix_channel_client, "~> 0.2.0"},
       {:uuid, "~> 1.1.7"},
-      {:rummage_ecto, "~> 1.2.0"}
+      {:rummage_ecto, "~> 1.2.0"},
+      {:distillery, "~> 1.5.1", runtime: false}
     ]
   end
 

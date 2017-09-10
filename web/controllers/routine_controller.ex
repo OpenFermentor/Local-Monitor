@@ -99,4 +99,9 @@ defmodule BioMonitor.RoutineController do
       |> Enum.each(&IO.write(file, &1))
     render(conn, "to_csv_ok.json")
   end
+
+  def restart(conn, _params) do
+    BioMonitor.RoutineMonitor.start_loop()
+    send_resp(conn, :no_content, "")
+  end
 end

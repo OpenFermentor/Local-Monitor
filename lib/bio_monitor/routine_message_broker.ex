@@ -66,7 +66,7 @@ defmodule BioMonitor.RoutineMessageBroker do
     Endpoint.broadcast(
       @channel,
       @stopped_msg,
-      %{message: "Stopped routine", routine: routine_to_map(routine)}
+      %{message: "Experimento finalizado", routine: routine_to_map(routine)}
     )
     SyncServer.send(@stopped_msg, routine_to_map(routine))
   end
@@ -91,7 +91,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{
         status: @routine_error,
-        message: "Error while saving the reading",
+        message: "Hubo un error al guardar una lectura.",
         errors: changeset.errors
       }
     )
@@ -99,7 +99,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{
         status: @routine_error,
-        message: "Error while saving the reading",
+        message: "Hubo un error al guardar una lectura.",
         errors: changeset.errors
       }
     )
@@ -111,7 +111,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{
         status: @routine_error,
-        message: "Error while saving the reading",
+        message: "Hubo un error al guardar una lectura.",
         errors: [message]
       }
     )
@@ -119,7 +119,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{
         status: @routine_error,
-        message: "Error while saving the reading",
+        message: "Hubo un error al guardar una lectura.",
         errors: [message]
       }
     )
