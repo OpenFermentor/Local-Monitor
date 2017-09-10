@@ -95,8 +95,13 @@ defmodule BioMonitor.RoutineController do
       |> Repo.preload(:readings)
     file = File.open!(Path.expand("~/Downloads/#{routine.title}_readings.csv"), [:write, :utf8])
     routine.readings
-      |> CSV.encode(headers: [:temp, :ph, :density])
+      |> CSV.encode(headers: [:temp, :ph, :density, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
     render(conn, "to_csv_ok.json")
+  end
+
+  def restart(conn, _params) do
+    BioMonitor.RoutineMonitor.start_loop()
+    send_resp(conn, :no_content, "")
   end
 end
