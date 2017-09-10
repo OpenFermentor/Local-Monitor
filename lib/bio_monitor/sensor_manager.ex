@@ -35,9 +35,9 @@ defmodule BioMonitor.SensorManager do
       {:ok, "Sensor ready"}
     else
       {:error, _} ->
-        {:error, "There was a problem connecting to the sensor."}
+        {:error, "Hubo un error al conectarse con la placa."}
       _ ->
-        {:error, "Error while processing config file, please check config.exs"}
+        {:error, "Error al procesar la configuracion del sistema."}
     end
   end
 
@@ -47,7 +47,7 @@ defmodule BioMonitor.SensorManager do
   def get_ph do
     case get_readings() do
       {:ok, readings} -> {:ok, readings[:ph]}
-      _ -> {:error, "Error while fetching the current ph value"}
+      _ -> {:error, "Error al obtener el Ph."}
     end
   end
 
@@ -73,9 +73,9 @@ defmodule BioMonitor.SensorManager do
       {:ok, %{temp: temp, ph: ph, co2: 0, density: density}}
     else
       :error ->
-        {:error, "There was an error fetching the readings"}
+        {:error, "Hubo un error al obtener las lecturas"}
       _ ->
-        {:error, "Unexpected error, please check the board connections"}
+        {:error, "Error inesperado, por favor revise la conexion con la placa."}
     end
   end
 
@@ -95,9 +95,9 @@ defmodule BioMonitor.SensorManager do
       {:ok, result}
     else
       {:error, message} ->
-        {:error, "Error sending command", message}
+        {:error, "Error al enviar instruccion.", message}
       :error ->
-        {:error, "No sensor matches any port"}
+        {:error, "Ningun sensor concuerda con el puerto."}
     end
   end
 

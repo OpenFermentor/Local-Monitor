@@ -6,8 +6,8 @@ defmodule BioMonitor.RoutineMonitor do
   """
 
   @name RoutineMonitor
-  @reading_interval 5_000
-  @uknown_sensor_error "Uknown error while getting sensor status, please check the boards connections"
+  @reading_interval 15_000
+  @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
 
   alias BioMonitor.Routine
   alias BioMonitor.Reading
@@ -105,7 +105,7 @@ defmodule BioMonitor.RoutineMonitor do
         IO.puts "Server terminated normally"
       _ ->
         Broker.send_system_error(
-          "A system error has ocurred and the routine process has stopped, please check the board connections and restart it."
+          "Ocurrio un error inesperado en el sistema y el experimento se ha detenido, por favor revise las conexiones con la placa y reinicie el experimento."
         )
     end
   end
@@ -140,7 +140,7 @@ defmodule BioMonitor.RoutineMonitor do
       end
     else
       {:error, message} -> register_error(message)
-      _ -> register_error("Unexpected error")
+      _ -> register_error("Error inesperado al recolectar lecturas.")
     end
   end
 
