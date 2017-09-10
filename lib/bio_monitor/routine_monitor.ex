@@ -40,6 +40,10 @@ defmodule BioMonitor.RoutineMonitor do
     GenServer.call(@name, :is_running)
   end
 
+  def start_loop() do
+    GenServer.call(@name, :start_loop)
+  end
+
   # GenServer Callbacks
   def init(:ok) do
     case SensorManager.start_sensors() do
@@ -79,6 +83,16 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call(:is_running, _from, state = %{loop: runLoop, routine: _routine}) do
     {:reply, {:ok, runLoop}, state}
+  end
+
+  def handle_call(:start_loop, _from, state) do
+    case SensorManager.start_sensors() do
+      {:ok, _message} ->
+        schedule_work()
+      {:error, _message} ->
+        Broker.send_sensor_error(@uknown_sensor_error)
+    end
+    {:reply, :ok, state}
   end
 
   def handle_info(:loop, state = %{loop: runLoop, routine: routine}) do

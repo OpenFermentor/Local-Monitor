@@ -10,6 +10,7 @@ defmodule BioMonitor.Router do
 
     post "/routines/stop", RoutineController, :stop
     post "/routines/start", RoutineController, :start
+    post "/system/restart", RoutineController, :restart
     get "/ph/current", PhController, :current
     post "/ph/offset", PhController, :set_offset
     resources "/routines", RoutineController, except: [:new, :edit] do
