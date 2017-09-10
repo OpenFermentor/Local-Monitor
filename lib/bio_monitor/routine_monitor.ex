@@ -105,7 +105,7 @@ defmodule BioMonitor.RoutineMonitor do
         IO.puts "Server terminated normally"
       _ ->
         Broker.send_system_error(
-          "Ocurrio un error inesperado en el sistema y el experimento se ha detenido, por favor revise las conexiones con la placa y reinicie el experimento."
+          "Ocurrió un error inesperado en el sistema y el experimento se ha detenido, por favor revise las conexiones con la placa y reinicie el experimento."
         )
     end
   end

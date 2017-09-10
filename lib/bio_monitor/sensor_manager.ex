@@ -37,7 +37,7 @@ defmodule BioMonitor.SensorManager do
       {:error, _} ->
         {:error, "Hubo un error al conectarse con la placa."}
       _ ->
-        {:error, "Error al procesar la configuracion del sistema."}
+        {:error, "Error al procesar la configuración del sistema."}
     end
   end
 
@@ -75,7 +75,7 @@ defmodule BioMonitor.SensorManager do
       :error ->
         {:error, "Hubo un error al obtener las lecturas"}
       _ ->
-        {:error, "Error inesperado, por favor revise la conexion con la placa."}
+        {:error, "Error inesperado, por favor revise la conexión con la placa."}
     end
   end
 
@@ -95,9 +95,9 @@ defmodule BioMonitor.SensorManager do
       {:ok, result}
     else
       {:error, message} ->
-        {:error, "Error al enviar instruccion.", message}
+        {:error, "Error al enviar instrucción.", message}
       :error ->
-        {:error, "Ningun sensor concuerda con el puerto."}
+        {:error, "Ningún sensor concuerda con el puerto."}
     end
   end
 
