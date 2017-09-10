@@ -33,7 +33,7 @@ defmodule BioMonitor.RoutineView do
   end
 
   def render("unavailable.json", _assigns) do
-    %{error: "El fermentador esta trabajando en otro experimento en este momento."}
+    %{error: "El fermentador está trabajando en otro experimento en este momento."}
   end
 
   def render("to_csv_ok.json", _assigns) do
