@@ -24,20 +24,4 @@ defmodule BioMonitor.PhControllerTest do
     conn = get conn, ph_path(conn, :current)
     assert response(conn, 422)
   end
-
-  test "sets base offset ph value", %{conn: conn} do
-    conn = post conn, ph_path(conn, :set_base, %{})
-    assert response(conn, 422)
-  end
-
-  test "sets acid offset ph value", %{conn: conn} do
-    conn = post conn, ph_path(conn, :set_acid, %{})
-    assert response(conn, 422)
-  end
-
-  test "sets neutral offset ph value", %{conn: conn} do
-    conn = post conn, ph_path(conn, :set_neutral, %{})
-    assert response(conn, 422)
-  end
-
 end
