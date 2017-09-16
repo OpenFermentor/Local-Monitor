@@ -225,11 +225,16 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   defp is_offset_stable?(ph_cal) do
-    case Math.Enum.mean(ph_cal.values) do
-      nil -> false
-      mean ->
-        oscillation = mean - List.last(ph_cal.values)
-        oscillation <= @ph_oscillation_tolerance && oscillation >= -@ph_oscillation_tolerance
+    case Enum.count(ph_cal.values) >= 10 do
+      true ->
+        case Math.Enum.mean(ph_cal.values) do
+          nil -> false
+          mean ->
+            oscillation = mean - List.last(ph_cal.values)
+            oscillation <= @ph_oscillation_tolerance && oscillation >= -@ph_oscillation_tolerance
+        end
+      false ->
+        false
     end
   end
 
