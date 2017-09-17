@@ -45,7 +45,7 @@ defmodule BioMonitor.PhController do
         |> render(
           ErrorView,
           "error.json",
-          %{message: "No se puede claibrar el sensor mientras este corriendo un experimento"}
+          %{message: "No se puede calibrar el sensor mientras este corriendo un experimento"}
         )
     end
   end

@@ -64,8 +64,8 @@ defmodule BioMonitor.SensorManager do
   @doc """
     sets the offset of the ph sensor for calibration
   """
-  def set_ph_offset(target, offser) do
-    case send_and_read(:ph, "setPhOffset ${target} ${offset}") do
+  def set_ph_offset(target, offset) do
+    case send_and_read(:ph, "setPhOffset #{target} #{offset}") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -127,9 +127,9 @@ defmodule BioMonitor.SensorManager do
       {:ok, result}
     else
       {:error, message} ->
-        {:error, "Error sending command", message}
+        {:error, "Error al enviar el comando para el sensor #{sensor}.", message}
       _ ->
-        {:error, "No sensor matches any port"}
+        {:error, "No hay ninguún sensor conectado para #{sensor}"}
     end
   end
 

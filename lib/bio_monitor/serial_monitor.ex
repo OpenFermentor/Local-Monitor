@@ -197,7 +197,7 @@ defmodule BioMonitor.SerialMonitor do
             {:reply, {:ok, value}, state}
         end
       _ ->
-        {:reply, {:error, "Uknown error"}, state}
+        {:reply, {:error, "Error desconocido."}, state}
     end
 
   end

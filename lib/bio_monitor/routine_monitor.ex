@@ -229,8 +229,8 @@ defmodule BioMonitor.RoutineMonitor do
         case Math.Enum.mean(ph_cal.values) do
           nil -> false
           mean ->
-            oscillation = mean - List.last(ph_cal.values)
-            oscillation <= @ph_oscillation_tolerance && oscillation >= -@ph_oscillation_tolerance
+            oscillation = Kernel.abs(mean - List.last(ph_cal.values))
+            oscillation <= @ph_oscillation_tolerance
         end
       false ->
         false
