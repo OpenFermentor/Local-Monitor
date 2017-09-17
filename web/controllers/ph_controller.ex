@@ -47,14 +47,6 @@ defmodule BioMonitor.PhController do
           "error.json",
           %{message: "No se puede claibrar el sensor mientras este corriendo un experimento"}
         )
-      :ph_cal_in_progress ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> render(
-          ErrorView,
-          "error.json",
-          %{message: "Ya se está calibrando el sensor."}
-        )
     end
   end
 end

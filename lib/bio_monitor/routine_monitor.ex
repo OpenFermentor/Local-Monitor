@@ -9,8 +9,8 @@ defmodule BioMonitor.RoutineMonitor do
   # TODO change both intervals to higher values
   @reading_interval 2_000
   @loop_interval 2_000
-  @ph_cal_interval 500
-  @ph_oscillation_tolerance 100
+  @ph_cal_interval 1_500
+  @ph_oscillation_tolerance 50
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
 
   defmodule MonitorState do
@@ -78,13 +78,11 @@ defmodule BioMonitor.RoutineMonitor do
     case state.loop do
       :routine ->
         {:reply, :routine_in_progress, state}
-      :ph_cal ->
-        {:reply, :ph_cal_in_progress, state}
-      :loop ->
+      _ ->
         case SensorManager.start_sensors() do
           {:ok, _message} ->
             Broker.send_start(routine)
-            schedule_work(:routine_loop, @reading_interval)
+            schedule_work(:routine, @reading_interval)
             {:reply, :ok, %{state | loop: :routine, routine: routine}}
           {:error, message} ->
             Broker.send_reading_error(message)
@@ -104,12 +102,11 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call({:start_ph_cal, target}, _from, state) do
     case state.loop do
-      :loop ->
-        {:reply, :ok, %{state | loop: :ph_cal, ph_cal: %{target: target, values: [], status: :started}}}
       :routine ->
         {:reply, :routine_in_progress, state}
-      :ph_cal ->
-        {:reply, :ph_cal_in_progress, state}
+      _ ->
+        schedule_work(:ph_cal, @ph_cal_interval)
+        {:reply, :ok, %{state | loop: :ph_cal, ph_cal: %{target: target, values: [], status: :started}}}
     end
   end
 
@@ -118,7 +115,7 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   def handle_call(:is_running, _from, state) do
-    {:reply, {:ok, state.loop == :loop}, state}
+    {:reply, {:ok, state.loop == :routine}, state}
   end
 
   def handle_call(:start_loop, _from, state) do
@@ -136,37 +133,39 @@ defmodule BioMonitor.RoutineMonitor do
     case state.loop do
       :loop ->
         get_sensors_status()
+      _ -> nil
     end
     schedule_work(:loop, @loop_interval)
     {:noreply, state}
   end
 
   #Loop in charge of fetching the readings when the routine is running
-  def handle_info(:routine_loop, state) do
+  def handle_info(:routine, state) do
     case state.loop do
       :routine ->
         state.routine.id
         |> fetch_reading
         |> process_reading(state.routine)
-        schedule_work(:routine_loop, @reading_interval)
+        schedule_work(:routine, @reading_interval)
+      _ -> nil
     end
     {:noreply, state}
   end
 
   #Loop in charge of running the ph calibration.
-  def handle_info(:ph_cal_loop, state) do
+  def handle_info(:ph_cal, state) do
     case state.loop do
       :ph_cal ->
         case is_offset_stable?(state.ph_cal) do
           true ->
             result = send_ph_offset(state.ph_cal.target, Math.Enum.mean(state.ph_cal.values))
-            {:noreply, %{state | ph_cal: %{target: state.ph_cal.target, values: [], status: result}}}
+            {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: result}}}
           false ->
             case SensorManager.get_ph_offset() do
-              :error -> {:noreply, %{state | ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
+              :error -> {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
               value ->
                 ph_cal_upd = value |> add_value_to_ph_cal(state.ph_cal)
-                schedule_work(:ph_cal_loop, @ph_cal_interval)
+                schedule_work(:ph_cal, @ph_cal_interval)
                 {:noreply, %{state | ph_cal: ph_cal_upd}}
             end
         end
@@ -240,7 +239,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   defp send_ph_offset(target, offset) do
     case target do
-      7 -> SensorManager.set_ph_offet("neutral", offset)
+      7 -> SensorManager.set_ph_offset("neutral", offset)
       4 -> SensorManager.set_ph_offset("acid", offset)
       10 -> SensorManager.set_ph_offset("base", offset)
     end
