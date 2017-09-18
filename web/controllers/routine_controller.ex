@@ -91,13 +91,23 @@ defmodule BioMonitor.RoutineController do
 
   def to_csv(conn, %{"routine_id" => id}) do
     routine =
-      Repo.get!(Routine, id)
+      Routine
+      |> Repo.get!(id)
       |> Repo.preload(:readings)
-    file = File.open!(Path.expand("~/Downloads/#{routine.title}_readings.csv"), [:write, :utf8])
+
+    path = "#{routine.title}_readings.csv"
+    file = File.open!(Path.expand(path), [:write, :utf8])
+
     routine.readings
       |> CSV.encode(headers: [:temp, :ph, :density, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
-    render(conn, "to_csv_ok.json")
+
+    conn
+      |> put_resp_header("Content-Disposition", "attachment; filename=#{path}")
+      |> send_file(200, path)
+
+    File.close(file)
+    File.rm(path)
   end
 
   def restart(conn, _params) do
