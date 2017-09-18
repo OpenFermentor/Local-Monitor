@@ -32,7 +32,7 @@ Response:
     "estimated_time_seconds": "estimated_time_seconds",
     "extra_notes": "extra_notes",
     "inserted_at": "inserted_at",
-    "updated_at": "updated_at",  
+    "updated_at": "updated_at",
   }
 }
 
@@ -54,7 +54,7 @@ Response:
     "estimated_time_seconds": "estimated_time_seconds",
     "extra_notes": "extra_notes",
     "inserted_at": "inserted_at",
-    "updated_at": "updated_at",  
+    "updated_at": "updated_at",
   }]
 }
 
@@ -79,7 +79,7 @@ Response:
     "estimated_time_seconds": "estimated_time_seconds",
     "extra_notes": "extra_notes",
     "inserted_at": "inserted_at",
-    "updated_at": "updated_at",  
+    "updated_at": "updated_at",
   }
 }
 
@@ -102,7 +102,7 @@ Response:
     "estimated_time_seconds": "estimated_time_seconds",
     "extra_notes": "extra_notes",
     "inserted_at": "inserted_at",
-    "updated_at": "updated_at",  
+    "updated_at": "updated_at",
   }
 }
 
@@ -153,6 +153,64 @@ Response:
 200 {}
 
 500 {}
+```
+
+#### PH
+###### GET `api/ph/current`
+Response
+```json
+  {
+    "current_value": "7.2"
+  }
+```
+
+###### GET `api/ph/status`
+RETURNS THE STATUS OF THE LAST CALIBRATION STARTED
+Response
+```json
+  {
+    calibration_target: (4 | 7 | 10),
+    calibration_status: (ok, started, error, not_started)
+  }
+```
+
+###### POST `api/ph/base`
+SETS THE BASE CONFIG ON THE SENSOR, RETURNS THAT VALUE (NOT FOR USE, JUST TO SEND IT)
+BODY
+```json
+{}
+```
+Response
+```json
+{
+  "message": "Comenzó la calibración, no quite el sensor de la solución"
+}
+```
+
+###### POST `api/ph/acid`
+SETS THE ACID CONFIG ON THE SENSOR, RETURNS THAT VALUE (NOT FOR USE, JUST TO SEND IT)
+BODY
+```json
+{}
+```
+Response
+```json
+{
+  "message": "Comenzó la calibración, no quite el sensor de la solución"
+}
+```
+
+###### POST `api/ph/neutral`
+SETS THE NEUTRAL CONFIG ON THE SENSOR, RETURNS THAT VALUE (NOT FOR USE, JUST TO SEND IT)
+BODY
+```json
+{}
+```
+Response
+```json
+{
+  "message": "Comenzó la calibración, no quite el sensor de la solución"
+}
 ```
 
 ## Socket

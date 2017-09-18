@@ -51,7 +51,8 @@ defmodule BioMonitor.Mixfile do
       {:phoenix_channel_client, "~> 0.2.0"},
       {:uuid, "~> 1.1.7"},
       {:rummage_ecto, "~> 1.2.0"},
-      {:distillery, "~> 1.5.1", runtime: false}
+      {:distillery, "~> 1.5.1", runtime: false},
+      {:math, "~> 0.3.0"},
     ]
   end
 

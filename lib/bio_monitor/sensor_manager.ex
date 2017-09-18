@@ -51,13 +51,23 @@ defmodule BioMonitor.SensorManager do
     end
   end
 
+  def get_ph_offset do
+    with {:ok, value} <- send_and_read(:ph, "getPhOffset"),
+      {:ok, parsed_value} <- parse_reading(value)
+    do
+      parsed_value
+    else
+      _ -> :error
+    end
+  end
+
   @doc """
     sets the offset of the ph sensor for calibration
   """
-  def set_ph_offset(offset) do
-    case send_command(:ph, "setPhOffset:#{offset}") do
+  def set_ph_offset(target, offset) do
+    case send_and_read(:ph, "setPhOffset #{target} #{offset}") do
       {:ok, _result} -> :ok
-      {:error, message} -> {:error, message}
+      {:error, message, _description} -> {:error, message}
     end
   end
 
@@ -98,6 +108,28 @@ defmodule BioMonitor.SensorManager do
         {:error, "Error al enviar instrucción.", message}
       :error ->
         {:error, "Ningún sensor concuerda con el puerto."}
+    end
+  end
+
+  @doc """
+    Sends a command for an specific sensor and reads the response.
+    sensor should be one of the previously reigstered sensors.
+
+    example send_command(:temp, "getTemp")
+    returns:
+      * {:ok, result}
+      * {:error, message}
+  """
+  def send_and_read(sensor, command) do
+    with {:ok, gs_name} <- gs_name_for_sensor(sensor),
+      {:ok, result} <- SerialMonitor.send_and_read(gs_name, command)
+    do
+      {:ok, result}
+    else
+      {:error, message} ->
+        {:error, "Error al enviar el comando para el sensor #{sensor}.", message}
+      _ ->
+        {:error, "No hay ninguún sensor conectado para #{sensor}"}
     end
   end
 
