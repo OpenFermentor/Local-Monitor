@@ -24,10 +24,4 @@ defmodule BioMonitor.PhControllerTest do
     conn = get conn, ph_path(conn, :current)
     assert response(conn, 422)
   end
-
-  test "sets offset ph value", %{conn: conn} do
-    conn = get conn, ph_path(conn, :current, %{"offset" => "#{0.3}"})
-    assert response(conn, 422)
-  end
-
 end

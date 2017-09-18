@@ -30,7 +30,7 @@ config :rummage_ecto,
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
     port: "/dev/cu.SLAB_USBtoUART",
-    speed: 9600,
+    speed: 115_200,
     sensors: [
       temp: "getTemp",
       ph: "getPh",
