@@ -7,11 +7,13 @@ defmodule BioMonitor.RoutineMonitor do
 
   @name RoutineMonitor
   # TODO change both intervals to higher values
-  @reading_interval 2_000
   @loop_interval 2_000
   @ph_cal_interval 1_500
   @ph_oscillation_tolerance 50
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
+  @ph_out_of_range_message "El valor de ph está por fuera del rango establecido. "
+  @temp_too_high_message "La temperatura está por encima del rango establecido."
+  @temp_too_low_message "La temperatura está por debajo del rango establecido."
 
   defmodule MonitorState do
     @moduledoc """
@@ -83,7 +85,7 @@ defmodule BioMonitor.RoutineMonitor do
           {:ok, _struct} <- save_routine_sart_timestamp(routine)
         do
           Broker.send_start(routine)
-          schedule_work(:routine, @reading_interval)
+          schedule_work(:routine, routine.loop_delay)
           {:reply, :ok, %{state | loop: :routine, routine: routine}}
         else
           :changeset_error ->
@@ -150,7 +152,7 @@ defmodule BioMonitor.RoutineMonitor do
         state.routine.id
         |> fetch_reading
         |> process_reading(state.routine)
-        schedule_work(:routine, @reading_interval)
+        schedule_work(:routine, state.routine.loop_delay)
       _ -> nil
     end
     {:noreply, state}
@@ -278,6 +280,15 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   defp process_reading({:ok, reading}, routine) do
+    if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
+      Broker.send_routine_error(@ph_out_of_range_message)
+    end
+    if reading.temp - routine.target_temp < -routine.temp_tolerance do
+      Broker.send_routine_error(@temp_too_low_message)
+    end
+    if reading.temp - routine.target_temp > routine.temp_tolerance do
+      Broker.send_routine_error(@temp_too_high_message)
+    end
     Broker.send_reading(reading, routine)
   end
 

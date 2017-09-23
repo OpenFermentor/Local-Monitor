@@ -31,6 +31,9 @@ defmodule BioMonitor.RoutineView do
       started_date: routine.started_date,
       inserted_at: routine.inserted_at,
       updated_at: routine.updated_at,
+      ph_tolerance: routine.ph_tolerance,
+      loop_delay: routine.loop_delay,
+      temp_tolerance: routine.temp_tolerance
     }
   end
 
