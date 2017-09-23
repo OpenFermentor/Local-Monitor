@@ -79,14 +79,18 @@ defmodule BioMonitor.RoutineMonitor do
       :routine ->
         {:reply, :routine_in_progress, state}
       _ ->
-        case SensorManager.start_sensors() do
-          {:ok, _message} ->
-            Broker.send_start(routine)
-            schedule_work(:routine, @reading_interval)
-            {:reply, :ok, %{state | loop: :routine, routine: routine}}
+        with {:ok, _message } <- SensorManager.start_sensors(),
+          {:ok, _struct} <- save_routine_sart_timestamp(routine)
+        do
+          Broker.send_start(routine)
+          schedule_work(:routine, @reading_interval)
+          {:reply, :ok, %{state | loop: :routine, routine: routine}}
+        else
+          :changeset_error ->
+            {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
           {:error, message} ->
             Broker.send_reading_error(message)
-            {:reply, {:error, "Failed to start the sensors", message}, state}
+            {:reply, {:error, "Error al conectar con los sensores", message}, state}
         end
     end
   end
@@ -255,6 +259,17 @@ defmodule BioMonitor.RoutineMonitor do
         }
       false ->
         %{ph_cal| values: ph_cal.values |> List.insert_at(-1, new_value)}
+    end
+  end
+
+  defp save_routine_sart_timestamp(routine) do
+    changeset = routine
+    |> Routine.started_changeset(%{started: true, started_date: DateTime.utc_now})
+    case Repo.update(changeset) do
+      {:ok, struct} ->
+        {:ok, struct}
+      {:error, _changeset} ->
+        :changeset_error
     end
   end
 

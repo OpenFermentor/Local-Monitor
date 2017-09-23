@@ -27,6 +27,8 @@ defmodule BioMonitor.RoutineView do
       target_density: routine.target_density,
       estimated_time_seconds: routine.estimated_time_seconds,
       extra_notes: routine.extra_notes,
+      started: routine.started,
+      started_date: routine.started_date,
       inserted_at: routine.inserted_at,
       updated_at: routine.updated_at,
     }
@@ -34,5 +36,9 @@ defmodule BioMonitor.RoutineView do
 
   def render("unavailable.json", _assigns) do
     %{error: "El fermentador está trabajando en otro experimento en este momento."}
+  end
+
+  def render("already_run.json", _assigns) do
+    %{error: "El experimento ya fue corrido."}
   end
 end

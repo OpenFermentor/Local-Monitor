@@ -70,6 +70,7 @@ defmodule BioMonitor.RoutineController do
     routine = Repo.get!(Routine, id)
     with running = BioMonitor.RoutineMonitor.is_running?(),
       {:ok, false} <- running,
+      :ready <- already_run(routine),
       :ok <- BioMonitor.RoutineMonitor.start_routine(routine)
     do
       render(conn, "show.json", routine: routine)
@@ -82,6 +83,10 @@ defmodule BioMonitor.RoutineController do
         conn
         |> put_status(:unprocessable_entity)
         |> render(BioMonitor.RoutineView, "unavailable.json")
+      :already_run ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.RoutineView, "already_run.json")
       _ ->
         conn
         |> put_status(500)
@@ -113,5 +118,12 @@ defmodule BioMonitor.RoutineController do
   def restart(conn, _params) do
     BioMonitor.RoutineMonitor.start_loop()
     send_resp(conn, :no_content, "")
+  end
+
+  defp already_run(routine) do
+    case routine.started do
+      true -> :already_run
+      false -> :ready
+    end
   end
 end

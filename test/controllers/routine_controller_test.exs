@@ -34,6 +34,8 @@ defmodule BioMonitor.RoutineControllerTest do
       "target_density" => routine.target_density,
       "estimated_time_seconds" => routine.estimated_time_seconds,
       "extra_notes" => routine.extra_notes,
+      "started" => false,
+      "started_date" => routine.started_date,
       "inserted_at" => to_date_string(routine.inserted_at),
       "updated_at" => to_date_string(routine.updated_at),
     }

@@ -1,27 +1,15 @@
 defmodule BioMonitor.ReadingController do
   use BioMonitor.Web, :controller
 
-  import Ecto.Query
   alias BioMonitor.Reading
   alias BioMonitor.Routine
-  @readings_per_page "30"
 
-  def index(conn, %{"routine_id" => routine_id} = params) do
+  def index(conn, %{"routine_id" => routine_id}) do
     with routine = Repo.get(Routine, routine_id),
       true <- routine != nil
     do
-      query = from r in Reading,
-        where: r.routine_id == ^routine_id
-      {readings, rummage} =
-        query |>
-        Rummage.Ecto.rummage(%{
-          "paginate" => %{
-            "per_page" => @readings_per_page,
-            "page" => "#{params["page"] || 1}"
-          }
-        })
-      readings = Repo.all(readings)
-      render(conn, "index.json", readings: readings, page_info: rummage)
+      routine = Repo.preload(routine, :readings)
+      render(conn, "index.json", readings: routine.readings)
     else
       false ->
         conn
@@ -68,11 +56,7 @@ defmodule BioMonitor.ReadingController do
 
   def delete(conn, %{"id" => id}) do
     reading = Repo.get!(Reading, id)
-
-    # Here we use delete! (with a bang) because we expect
-    # it to always work (and if it does not, it will raise).
     Repo.delete!(reading)
-
     send_resp(conn, :no_content, "")
   end
 end
