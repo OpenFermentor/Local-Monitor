@@ -1,11 +1,8 @@
 defmodule BioMonitor.ReadingView do
   use BioMonitor.Web, :view
 
-  def render("index.json", %{readings: readings, page_info: page_info}) do
-    Map.merge(
-      %{data: render_many(readings, BioMonitor.ReadingView, "reading.json")},
-      page_info
-    )
+  def render("index.json", %{readings: readings}) do
+    %{data: render_many(readings, BioMonitor.ReadingView, "reading.json")}
   end
 
   def render("show.json", %{reading: reading}) do

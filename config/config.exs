@@ -33,8 +33,7 @@ config :bio_monitor, BioMonitor.SensorManager,
     speed: 115_200,
     sensors: [
       temp: "getTemp",
-      ph: "getPh",
-      density: "getTurb"
+      ph: "getPh"
     ]
   ]
 

@@ -7,11 +7,13 @@ defmodule BioMonitor.RoutineMonitor do
 
   @name RoutineMonitor
   # TODO change both intervals to higher values
-  @reading_interval 2_000
   @loop_interval 2_000
   @ph_cal_interval 1_500
   @ph_oscillation_tolerance 50
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
+  @ph_out_of_range_message "El valor de ph está por fuera del rango establecido. "
+  @temp_too_high_message "La temperatura está por encima del rango establecido."
+  @temp_too_low_message "La temperatura está por debajo del rango establecido."
 
   defmodule MonitorState do
     @moduledoc """
@@ -79,14 +81,18 @@ defmodule BioMonitor.RoutineMonitor do
       :routine ->
         {:reply, :routine_in_progress, state}
       _ ->
-        case SensorManager.start_sensors() do
-          {:ok, _message} ->
-            Broker.send_start(routine)
-            schedule_work(:routine, @reading_interval)
-            {:reply, :ok, %{state | loop: :routine, routine: routine}}
+        with {:ok, _message } <- SensorManager.start_sensors(),
+          {:ok, _struct} <- save_routine_sart_timestamp(routine)
+        do
+          Broker.send_start(routine)
+          schedule_work(:routine, routine.loop_delay)
+          {:reply, :ok, %{state | loop: :routine, routine: routine}}
+        else
+          :changeset_error ->
+            {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
           {:error, message} ->
             Broker.send_reading_error(message)
-            {:reply, {:error, "Failed to start the sensors", message}, state}
+            {:reply, {:error, "Error al conectar con los sensores", message}, state}
         end
     end
   end
@@ -146,7 +152,7 @@ defmodule BioMonitor.RoutineMonitor do
         state.routine.id
         |> fetch_reading
         |> process_reading(state.routine)
-        schedule_work(:routine, @reading_interval)
+        schedule_work(:routine, state.routine.loop_delay)
       _ -> nil
     end
     {:noreply, state}
@@ -258,11 +264,31 @@ defmodule BioMonitor.RoutineMonitor do
     end
   end
 
+  defp save_routine_sart_timestamp(routine) do
+    changeset = routine
+    |> Routine.started_changeset(%{started: true, started_date: DateTime.utc_now})
+    case Repo.update(changeset) do
+      {:ok, struct} ->
+        {:ok, struct}
+      {:error, _changeset} ->
+        :changeset_error
+    end
+  end
+
   defp process_reading(:ok, _routine) do
     IO.puts("No reading detected.")
   end
 
   defp process_reading({:ok, reading}, routine) do
+    if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
+      Broker.send_routine_error(@ph_out_of_range_message)
+    end
+    if reading.temp - routine.target_temp < -routine.temp_tolerance do
+      Broker.send_routine_error(@temp_too_low_message)
+    end
+    if reading.temp - routine.target_temp > routine.temp_tolerance do
+      Broker.send_routine_error(@temp_too_high_message)
+    end
     Broker.send_reading(reading, routine)
   end
 

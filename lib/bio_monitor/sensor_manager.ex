@@ -77,10 +77,9 @@ defmodule BioMonitor.SensorManager do
   def get_readings do
     with {:ok, arduino_readings} <- SerialMonitor.get_readings(@arduino_gs),
       {:ok, temp} <- parse_reading(arduino_readings[:temp]),
-      {:ok, ph} <- parse_reading(arduino_readings[:ph]),
-      {:ok, density} <- parse_reading(arduino_readings[:density])
+      {:ok, ph} <- parse_reading(arduino_readings[:ph])
     do
-      {:ok, %{temp: temp, ph: ph, co2: 0, density: density}}
+      {:ok, %{temp: temp, ph: ph, co2: 0, density: 0}}
     else
       :error ->
         {:error, "Hubo un error al obtener las lecturas"}
