@@ -122,7 +122,7 @@ defmodule BioMonitor.RoutineController do
 
   def current(conn, _params) do
     case BioMonitor.RoutineMonitor.current_routine() do
-      {:not_running} ->
+      :not_running ->
         send_resp(conn, :no_content, "")
       {:ok, routine} ->
         conn
