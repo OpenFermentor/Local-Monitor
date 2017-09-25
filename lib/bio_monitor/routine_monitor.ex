@@ -61,6 +61,10 @@ defmodule BioMonitor.RoutineMonitor do
     GenServer.call(@name, :is_running)
   end
 
+  def current_routine() do
+    GenServer.call(@name, :current_routine)
+  end
+
   def start_loop() do
     GenServer.call(@name, :start_loop)
   end
@@ -122,6 +126,14 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call(:is_running, _from, state) do
     {:reply, {:ok, state.loop == :routine}, state}
+  end
+
+  def handle_call(:current_routine, _from, state) do
+    case state.loop do
+      :routine -> {:reply, {:ok, state.routine}, state}
+      _ -> {:reply, :not_running, state}
+    end
+
   end
 
   def handle_call(:start_loop, _from, state) do
