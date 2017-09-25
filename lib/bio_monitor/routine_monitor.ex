@@ -8,7 +8,7 @@ defmodule BioMonitor.RoutineMonitor do
   @name RoutineMonitor
   # TODO change both intervals to higher values
   @loop_interval 2_000
-  @ph_cal_interval 1_500
+  @ph_cal_interval 1_000
   @ph_oscillation_tolerance 50
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
   @ph_out_of_range_message "El valor de ph está por fuera del rango establecido. "
@@ -19,7 +19,7 @@ defmodule BioMonitor.RoutineMonitor do
     @moduledoc """
       Struct represetation of the RoutineMonitor's state.
     """
-    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}
+    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0
   end
 
   alias BioMonitor.Routine
@@ -61,6 +61,10 @@ defmodule BioMonitor.RoutineMonitor do
     GenServer.call(@name, :is_running)
   end
 
+  def current_routine() do
+    GenServer.call(@name, :current_routine)
+  end
+
   def start_loop() do
     GenServer.call(@name, :start_loop)
   end
@@ -86,7 +90,7 @@ defmodule BioMonitor.RoutineMonitor do
         do
           Broker.send_start(routine)
           schedule_work(:routine, routine.loop_delay)
-          {:reply, :ok, %{state | loop: :routine, routine: routine}}
+          {:reply, :ok, %{state | loop: :routine, routine: routine, started: System.system_time(:second)}}
         else
           :changeset_error ->
             {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
@@ -124,6 +128,14 @@ defmodule BioMonitor.RoutineMonitor do
     {:reply, {:ok, state.loop == :routine}, state}
   end
 
+  def handle_call(:current_routine, _from, state) do
+    case state.loop do
+      :routine -> {:reply, {:ok, state.routine}, state}
+      _ -> {:reply, :not_running, state}
+    end
+
+  end
+
   def handle_call(:start_loop, _from, state) do
     case SensorManager.start_sensors() do
       {:ok, _message} ->
@@ -152,6 +164,7 @@ defmodule BioMonitor.RoutineMonitor do
         state.routine.id
         |> fetch_reading
         |> process_reading(state.routine)
+        check_for_triggers(state.routine, state.started)
         schedule_work(:routine, state.routine.loop_delay)
       _ -> nil
     end
@@ -294,6 +307,11 @@ defmodule BioMonitor.RoutineMonitor do
 
   defp process_reading({:error, changeset}, _routine) do
     Broker.send_reading_changeset_error(changeset)
+  end
+
+  defp check_for_triggers(_routine, start_timestamp) do
+    IO.puts "Routine started #{System.system_time(:second) - start_timestamp} seconds ago."
+    # Put any trigger processing here (such as opening a pump.)
   end
 
   defp register_error(message) do
