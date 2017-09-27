@@ -258,9 +258,9 @@ defmodule BioMonitor.RoutineMonitor do
 
   defp send_ph_offset(target, offset) do
     case target do
-      7 -> SensorManager.set_ph_offset("neutral", offset)
-      4 -> SensorManager.set_ph_offset("acid", offset)
-      10 -> SensorManager.set_ph_offset("base", offset)
+      7 -> SensorManager.set_ph_offset("neutral", 7, offset)
+      4 -> SensorManager.set_ph_offset("acid", 4, offset)
+      10 -> SensorManager.set_ph_offset("base", 10, offset)
     end
   end
 

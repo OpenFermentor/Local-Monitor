@@ -64,8 +64,8 @@ defmodule BioMonitor.SensorManager do
   @doc """
     sets the offset of the ph sensor for calibration
   """
-  def set_ph_offset(target, offset) do
-    case send_and_read(:ph, "setPhOffset #{target} #{offset}") do
+  def set_ph_offset(target, value,  offset) do
+    case send_and_read(:ph, "setPhOffset #{target} #{value} #{offset}") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
