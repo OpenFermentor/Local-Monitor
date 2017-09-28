@@ -20,7 +20,7 @@ defmodule BioMonitor.Routine do
     field :temp_tolerance, :float
     field :ph_tolerance, :float
     field :loop_delay, :integer
-    has_many :readings, BioMonitor.Reading
+    has_many :readings, BioMonitor.Reading, on_delete: :delete_all
 
     timestamps()
   end

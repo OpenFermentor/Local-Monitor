@@ -29,7 +29,7 @@ config :rummage_ecto,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    port: "/dev/cu.usbmodem1421",
+    port: "/dev/cu.SLAB_USBtoUART",
     speed: 115_200,
     sensors: [
       temp: "getTemp",
