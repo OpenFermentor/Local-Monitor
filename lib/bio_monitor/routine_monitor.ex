@@ -9,6 +9,8 @@ defmodule BioMonitor.RoutineMonitor do
   # TODO change both intervals to higher values
   @loop_interval 2_000
   @ph_cal_interval 1_000
+  @ph_balance_delay 60_000
+  @ph_balance_error "Ha ocurrido un error al intentar corregir el ph, por favor revise la conexión de las bombas."
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
 
   defmodule MonitorState do
@@ -61,6 +63,14 @@ defmodule BioMonitor.RoutineMonitor do
 
   def start_loop() do
     GenServer.call(@name, :start_loop)
+  end
+
+  def balance_ph_to_acid() do
+    GenServer.cast(@name, {:balance_ph, :to_acid})
+  end
+
+  def balance_ph_to_base() do
+    GenServer.cast(@name, {:balance_ph, :to_base})
   end
 
   # GenServer Callbacks
@@ -140,6 +150,38 @@ defmodule BioMonitor.RoutineMonitor do
     {:reply, :ok, state}
   end
 
+  def handle_cast({:balance_ph, :to_acid}, state) do
+    IO.puts "====================="
+    IO.puts "====================="
+    IO.puts "Balancing PH to acid"
+    IO.puts "====================="
+    IO.puts "====================="
+    case SensorManager.pump_acid() do
+      :ok ->
+        Process.send_after(self(), :check_ph, @ph_balance_delay)
+        {:noreply, state}
+      {:error, _message} ->
+        Broker.send_system_error(@ph_balance_error)
+        {:noreply, state}
+    end
+  end
+
+  def handle_cast({:balance_ph, :to_base}, state) do
+    IO.puts "====================="
+    IO.puts "====================="
+    IO.puts "Balancing PH to base"
+    IO.puts "====================="
+    IO.puts "====================="
+    case SensorManager.pump_base() do
+      :ok ->
+        Process.send_after(self(), :check_ph, @ph_balance_delay)
+        {:noreply, state}
+      {:error, _message} ->
+        Broker.send_system_error(@ph_balance_error)
+        {:noreply, state}
+    end
+  end
+
   #Loop in charge of checking the status of the sensors when the routine is not running
   def handle_info(:loop, state) do
     case state.loop do
@@ -187,8 +229,17 @@ defmodule BioMonitor.RoutineMonitor do
     end
   end
 
-  def handle_info(_, _state) do
+  def handle_info(:check_ph, state) do
+    case SensorManager.get_readings() do
+      {:ok, readings} -> Helpers.process_reading(readings, state.routine)
+      {:error, message} -> Broker.send_routine_error(message)
+    end
+    {:noreply, state}
+  end
+
+  def handle_info(_, state) do
     IO.puts("Uknown message received.")
+    {:noreply, state}
   end
 
   def terminate(reason, _state) do
