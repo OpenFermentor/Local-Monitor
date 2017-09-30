@@ -17,7 +17,7 @@ defmodule BioMonitor.RoutineMonitor do
     @moduledoc """
       Struct represetation of the RoutineMonitor's state.
     """
-    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0
+    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false
   end
 
   alias BioMonitor.SensorManager
@@ -159,10 +159,10 @@ defmodule BioMonitor.RoutineMonitor do
     case SensorManager.pump_acid() do
       :ok ->
         Process.send_after(self(), :check_ph, @ph_balance_delay)
-        {:noreply, state}
+        {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
         Broker.send_system_error(@ph_balance_error)
-        {:noreply, state}
+        {:noreply, %{state | balancing_ph: false}}
     end
   end
 
@@ -175,10 +175,10 @@ defmodule BioMonitor.RoutineMonitor do
     case SensorManager.pump_base() do
       :ok ->
         Process.send_after(self(), :check_ph, @ph_balance_delay)
-        {:noreply, state}
+        {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
         Broker.send_system_error(@ph_balance_error)
-        {:noreply, state}
+        {:noreply, %{state | balancing_ph: false}}
     end
   end
 
@@ -195,7 +195,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   #Loop in charge of fetching the readings when the routine is running
   def handle_info(:routine, state) do
-    case state.loop do
+    case state.loop == :routine && !state.balancing_ph do
       :routine ->
         state.routine.id
         |> Helpers.fetch_reading
@@ -231,10 +231,12 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_info(:check_ph, state) do
     case SensorManager.get_readings() do
-      {:ok, readings} -> Helpers.process_reading(readings, state.routine)
-      {:error, message} -> Broker.send_routine_error(message)
+      {:ok, readings} ->
+        Helpers.process_reading(readings, state.routine)
+      {:error, message} ->
+        Broker.send_routine_error(message)
     end
-    {:noreply, state}
+    {:noreply, %{state | balancing_ph: false}}
   end
 
   def handle_info(_, state) do
