@@ -35,6 +35,46 @@ defmodule BioMonitor.PhController do
     conn |> start_calibration(7)
   end
 
+  def test_acid_drop(conn, _params) do
+    case SensorManager.pump_acid() do
+      :ok -> send_resp(conn, :no_content, "")
+      {:error, message} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(ErrorView, "error.json", %{message: message})
+    end
+  end
+
+  def test_base_drop(conn, _params) do
+    case SensorManager.pump_acid() do
+      :ok -> send_resp(conn, :no_content, "")
+      {:error, message} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(ErrorView, "error.json", %{message: message})
+    end
+  end
+
+  def push_acid(conn, _params) do
+    case SensorManager.push_acid() do
+      :ok -> send_resp(conn, :no_content, "")
+      {:error, message} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(ErrorView, "error.json", %{message: message})
+    end
+  end
+
+  def push_base(conn, _params) do
+    case SensorManager.push_base() do
+      :ok -> send_resp(conn, :no_content, "")
+      {:error, message} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> render(ErrorView, "error.json", %{message: message})
+    end
+  end
+
   defp start_calibration(conn, target) do
     case RoutineMonitor.start_ph_cal(target) do
       :ok ->

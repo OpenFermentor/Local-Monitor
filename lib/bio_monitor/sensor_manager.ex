@@ -92,6 +92,28 @@ defmodule BioMonitor.SensorManager do
   end
 
   @doc """
+    pushes acid through the pump
+  """
+  def push_acid() do
+    ## TODO, change this values to the real ones
+    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+      {:ok, _result} -> :ok
+      {:error, message, _description} -> {:error, message}
+    end
+  end
+
+  @doc """
+    pushes base through the pump
+  """
+  def push_base() do
+    ## TODO, change this values to the real ones
+    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+      {:ok, _result} -> :ok
+      {:error, message, _description} -> {:error, message}
+    end
+  end
+
+  @doc """
     Fetchs all readings from the SerialMonitors and parse them.
   """
   def get_readings do
