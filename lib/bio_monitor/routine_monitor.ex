@@ -9,11 +9,7 @@ defmodule BioMonitor.RoutineMonitor do
   # TODO change both intervals to higher values
   @loop_interval 2_000
   @ph_cal_interval 1_000
-  @ph_oscillation_tolerance 50
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
-  @ph_out_of_range_message "El valor de ph está por fuera del rango establecido. "
-  @temp_too_high_message "La temperatura está por encima del rango establecido."
-  @temp_too_low_message "La temperatura está por debajo del rango establecido."
 
   defmodule MonitorState do
     @moduledoc """
@@ -22,11 +18,9 @@ defmodule BioMonitor.RoutineMonitor do
     defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0
   end
 
-  alias BioMonitor.Routine
-  alias BioMonitor.Reading
-  alias BioMonitor.Repo
   alias BioMonitor.SensorManager
   alias BioMonitor.RoutineMessageBroker, as: Broker
+  alias BioMonitor.RoutineProcessing, as: Helpers
 
   # User API
   def start_link do
@@ -86,7 +80,7 @@ defmodule BioMonitor.RoutineMonitor do
         {:reply, :routine_in_progress, state}
       _ ->
         with {:ok, _message } <- SensorManager.start_sensors(),
-          {:ok, _struct} <- save_routine_sart_timestamp(routine)
+          {:ok, _struct} <- Helpers.save_routine_sart_timestamp(routine)
         do
           Broker.send_start(routine)
           schedule_work(:routine, routine.loop_delay)
@@ -150,7 +144,7 @@ defmodule BioMonitor.RoutineMonitor do
   def handle_info(:loop, state) do
     case state.loop do
       :loop ->
-        get_sensors_status()
+        Helpers.get_sensors_status()
       _ -> nil
     end
     schedule_work(:loop, @loop_interval)
@@ -162,9 +156,9 @@ defmodule BioMonitor.RoutineMonitor do
     case state.loop do
       :routine ->
         state.routine.id
-        |> fetch_reading
-        |> process_reading(state.routine)
-        check_for_triggers(state.routine, state.started)
+        |> Helpers.fetch_reading
+        |> Helpers.process_reading(state.routine)
+        Helpers.check_for_triggers(state.routine, state.started)
         schedule_work(:routine, state.routine.loop_delay)
       _ -> nil
     end
@@ -175,15 +169,15 @@ defmodule BioMonitor.RoutineMonitor do
   def handle_info(:ph_cal, state) do
     case state.loop do
       :ph_cal ->
-        case is_offset_stable?(state.ph_cal) do
+        case Helpers.is_offset_stable?(state.ph_cal) do
           true ->
-            result = send_ph_offset(state.ph_cal.target, Math.Enum.mean(state.ph_cal.values))
+            result = Helpers.send_ph_offset(state.ph_cal.target, Math.Enum.mean(state.ph_cal.values))
             {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: result}}}
           false ->
             case SensorManager.get_ph_offset() do
               :error -> {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
               value ->
-                ph_cal_upd = value |> add_value_to_ph_cal(state.ph_cal)
+                ph_cal_upd = value |> Helpers.add_value_to_ph_cal(state.ph_cal)
                 schedule_work(:ph_cal, @ph_cal_interval)
                 {:noreply, %{state | ph_cal: ph_cal_upd}}
             end
@@ -211,111 +205,5 @@ defmodule BioMonitor.RoutineMonitor do
   # Helpers
   defp schedule_work(loop_name, delay) do
     Process.send_after(self(), loop_name, delay)
-  end
-
-  defp get_sensors_status do
-    case SensorManager.get_readings()  do
-      {:ok, data} ->
-        Broker.send_status(data)
-      {:error, message} ->
-        Broker.send_sensor_error(message)
-      _ ->
-        Broker.send_sensor_error(@uknown_sensor_error)
-    end
-  end
-
-  defp fetch_reading(routine_id) do
-    with {:ok, data} <- SensorManager.get_readings() do
-      with routine = Repo.get(Routine, routine_id),
-        true <- routine != nil,
-        reading <- Ecto.build_assoc(routine, :readings),
-        changeset <- Reading.changeset(reading, data),
-        {:ok, reading} <- Repo.insert(changeset)
-      do
-        {:ok, reading}
-      else
-        {:error, changeset} -> {:error, changeset}
-      end
-    else
-      {:error, message} -> register_error(message)
-      _ -> register_error("Error inesperado al recolectar lecturas.")
-    end
-  end
-
-  defp is_offset_stable?(ph_cal) do
-    case Enum.count(ph_cal.values) >= 10 do
-      true ->
-        case Math.Enum.mean(ph_cal.values) do
-          nil -> false
-          mean ->
-            oscillation = Kernel.abs(mean - List.last(ph_cal.values))
-            oscillation <= @ph_oscillation_tolerance
-        end
-      false ->
-        false
-    end
-  end
-
-  defp send_ph_offset(target, offset) do
-    case target do
-      7 -> SensorManager.set_ph_offset("neutral", 7, offset)
-      4 -> SensorManager.set_ph_offset("acid", 4, offset)
-      10 -> SensorManager.set_ph_offset("base", 10, offset)
-    end
-  end
-
-  defp add_value_to_ph_cal(new_value, ph_cal) do
-    case Enum.count(ph_cal.values) >= 10 do
-      true ->
-        %{
-          ph_cal | values: ph_cal.values
-            |> List.delete_at(0)
-            |> List.insert_at(-1, new_value)
-        }
-      false ->
-        %{ph_cal| values: ph_cal.values |> List.insert_at(-1, new_value)}
-    end
-  end
-
-  defp save_routine_sart_timestamp(routine) do
-    changeset = routine
-    |> Routine.started_changeset(%{started: true, started_date: DateTime.utc_now})
-    case Repo.update(changeset) do
-      {:ok, struct} ->
-        {:ok, struct}
-      {:error, _changeset} ->
-        :changeset_error
-    end
-  end
-
-  defp process_reading(:ok, _routine) do
-    IO.puts("No reading detected.")
-  end
-
-  defp process_reading({:ok, reading}, routine) do
-    if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
-      Broker.send_routine_error(@ph_out_of_range_message)
-    end
-    if reading.temp - routine.target_temp < -routine.temp_tolerance do
-      Broker.send_routine_error(@temp_too_low_message)
-    end
-    if reading.temp - routine.target_temp > routine.temp_tolerance do
-      Broker.send_routine_error(@temp_too_high_message)
-    end
-    Broker.send_reading(reading, routine)
-  end
-
-  defp process_reading({:error, changeset}, _routine) do
-    Broker.send_reading_changeset_error(changeset)
-  end
-
-  defp check_for_triggers(_routine, start_timestamp) do
-    IO.puts "Routine started #{System.system_time(:second) - start_timestamp} seconds ago."
-    # Put any trigger processing here (such as opening a pump.)
-  end
-
-  defp register_error(message) do
-    # Broadcast errors.
-    Broker.send_reading_error(message)
   end
 end
