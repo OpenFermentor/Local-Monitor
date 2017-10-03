@@ -18,13 +18,19 @@ config :bio_monitor, BioMonitor.Endpoint,
            adapter: Phoenix.PubSub.PG2]
 
 # Configures Elixir's Logger
-config :logger, :console,
+config :logger,
+  backends: [:console, Flames.Logger],
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
 config :rummage_ecto,
   Rummage.Ecto,
   default_repo: BioMonitor.Repo
+
+config :flames,
+  repo: BioMonitor.Repo,
+  endpoint: BioMonitor.Endpoint,
+  table: "errors"
 
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,

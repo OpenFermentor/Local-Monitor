@@ -21,7 +21,7 @@ defmodule BioMonitor.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {BioMonitor, []},
-     applications: [:phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
+     applications: [:flames, :phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
                     :cors_plug, :csv, :nerves_uart, :phoenix_channel_client,
                     :rummage_ecto, :uuid, :phoenix_ecto, :postgrex,
                     :elixir_make, :websocket_client]]
@@ -53,6 +53,7 @@ defmodule BioMonitor.Mixfile do
       {:rummage_ecto, "~> 1.2.0"},
       {:distillery, "~> 1.5.1", runtime: false},
       {:math, "~> 0.3.0"},
+      {:flames, "~> 0.3.2"},
     ]
   end
 
