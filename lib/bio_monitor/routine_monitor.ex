@@ -195,14 +195,19 @@ defmodule BioMonitor.RoutineMonitor do
 
   #Loop in charge of fetching the readings when the routine is running
   def handle_info(:routine, state) do
-    case state.loop == :routine && !state.balancing_ph do
+    case state.loop do
       :routine ->
-        state.routine.id
-        |> Helpers.fetch_reading
-        |> Helpers.process_reading(state.routine)
-        Helpers.check_for_triggers(state.routine, state.started)
-        schedule_work(:routine, state.routine.loop_delay)
-      _ -> nil
+        case state.balancing_ph do
+          true ->
+            schedule_work(:routine, state.routine.loop_delay)
+          false ->
+            state.routine.id
+            |> Helpers.fetch_reading
+            |> Helpers.process_reading(state.routine)
+            Helpers.check_for_triggers(state.routine, state.started)
+            schedule_work(:routine, state.routine.loop_delay)
+        end
+        _ -> nil
     end
     {:noreply, state}
   end
@@ -230,12 +235,9 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   def handle_info(:check_ph, state) do
-    case SensorManager.get_readings() do
-      {:ok, readings} ->
-        Helpers.process_reading(readings, state.routine)
-      {:error, message} ->
-        Broker.send_routine_error(message)
-    end
+    state.routine.id
+    |> Helpers.fetch_reading
+    |> Helpers.process_reading(state.routine)
     {:noreply, %{state | balancing_ph: false}}
   end
 
