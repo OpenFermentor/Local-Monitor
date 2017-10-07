@@ -17,6 +17,9 @@ defmodule BioMonitor.RoutineMessageBroker do
   @routine_error :reading_error
   @sensor_error :sensor_error
   @system_error :system_error
+  # Instructions channel
+  @instructions_channel "instructions"
+  @instruction "instruction"
 
   alias BioMonitor.Endpoint
   alias BioMonitor.SyncServer
@@ -121,6 +124,16 @@ defmodule BioMonitor.RoutineMessageBroker do
         status: @routine_error,
         message: "Hubo un error al guardar una lectura.",
         errors: [message]
+      }
+    )
+  end
+
+  def send_instruction(message) do
+    Endpoint.broadcast(
+      @instructions_channel,
+      @instruction,
+      %{
+        message: message,
       }
     )
   end

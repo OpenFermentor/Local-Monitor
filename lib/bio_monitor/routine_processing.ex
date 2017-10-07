@@ -90,28 +90,27 @@ defmodule BioMonitor.RoutineProcessing do
     end
   end
 
-  def process_reading(:ok, _routine) do
+  def process_reading(:ok, _routine, _temp_target) do
     IO.puts("No reading detected.")
   end
 
-  def process_reading({:ok, reading}, routine) do
+  def process_reading({:ok, reading}, routine, temp_target) do
     if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
       Broker.send_routine_error(@ph_out_of_range_message)
-      IO.puts "ROUTINE BALANCE PH #{routine.balance_ph}"
       if routine.balance_ph do
         start_ph_balance(reading.ph, routine.target_ph, routine.ph_tolerance)
       end
     end
-    if reading.temp - routine.target_temp < -routine.temp_tolerance do
+    if reading.temp - temp_target < -routine.temp_tolerance do
       Broker.send_routine_error(@temp_too_low_message)
     end
-    if reading.temp - routine.target_temp > routine.temp_tolerance do
+    if reading.temp - temp_target > routine.temp_tolerance do
       Broker.send_routine_error(@temp_too_high_message)
     end
     Broker.send_reading(reading, routine)
   end
 
-  def process_reading({:error, changeset}, _routine) do
+  def process_reading({:error, changeset}, _routine, _temp_target) do
     Broker.send_reading_changeset_error(changeset)
   end
 
@@ -132,5 +131,28 @@ defmodule BioMonitor.RoutineProcessing do
   def register_error(message) do
     # Broadcast errors.
     Broker.send_reading_error(message)
+  end
+
+  def get_current_temp_target(routine, timestamp) do
+    routine = Repo.preload(routine, :temp_ranges)
+    elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
+    current = routine.temp_ranges # Find the latest range (the one that should be running)
+    |> Enum.filter(fn target ->
+      target.from_second <= elapsed_time
+    end)
+    |> Enum.map(fn target -> target.from_second end)
+    |> Enum.max(fn -> nil end)
+    case current do
+      nil ->
+        IO.puts "current temp #{routine.target_temp}"
+        routine.target_temp
+      from_second ->
+        range = routine.temp_ranges
+          |> Enum.find(fn range ->
+              range.from_second === from_second
+            end)
+        IO.puts "current temp #{range.temp}"
+        range.temp
+    end
   end
 end

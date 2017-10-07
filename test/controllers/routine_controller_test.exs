@@ -42,6 +42,7 @@ defmodule BioMonitor.RoutineControllerTest do
       "loop_delay" => routine.loop_delay,
       "inserted_at" => to_date_string(routine.inserted_at),
       "updated_at" => to_date_string(routine.updated_at),
+      "temp_ranges" => [],
     }
   end
 

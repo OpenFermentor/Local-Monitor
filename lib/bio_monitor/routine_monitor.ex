@@ -17,7 +17,7 @@ defmodule BioMonitor.RoutineMonitor do
     @moduledoc """
       Struct represetation of the RoutineMonitor's state.
     """
-    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false
+    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false, target_temp: 0
   end
 
   alias BioMonitor.SensorManager
@@ -90,11 +90,13 @@ defmodule BioMonitor.RoutineMonitor do
         {:reply, :routine_in_progress, state}
       _ ->
         with {:ok, _message } <- SensorManager.start_sensors(),
-          {:ok, _struct} <- Helpers.save_routine_sart_timestamp(routine)
+          {:ok, struct} <- Helpers.save_routine_sart_timestamp(routine)
         do
           Broker.send_start(routine)
-          schedule_work(:routine, routine.loop_delay)
-          {:reply, :ok, %{state | loop: :routine, routine: routine, started: System.system_time(:second)}}
+          schedule_work(:routine, 1000)
+          started_at =  System.system_time(:second)
+          current_temp = Helpers.get_current_temp_target(struct, started_at)
+          {:reply, :ok, %{state | loop: :routine, routine: struct, started: started_at, target_temp: current_temp}}
         else
           :changeset_error ->
             {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
@@ -200,16 +202,23 @@ defmodule BioMonitor.RoutineMonitor do
         case state.balancing_ph do
           true ->
             schedule_work(:routine, state.routine.loop_delay)
+            {:noreply, state}
           false ->
+            newTemp = Helpers.get_current_temp_target(state.routine, state.started)
+            if newTemp != state.target_temp do
+              IO.puts "=====CHANGING TEMPERATURE TO: #{newTemp}===="
+              Broker.send_instruction("Por favor, colocar el circulador a #{newTemp} grados.")
+            end
+            state = %{state | target_temp: newTemp}
             state.routine.id
             |> Helpers.fetch_reading
-            |> Helpers.process_reading(state.routine)
+            |> Helpers.process_reading(state.routine, state.target_temp)
             Helpers.check_for_triggers(state.routine, state.started)
             schedule_work(:routine, state.routine.loop_delay)
+            {:noreply, state}
         end
-        _ -> nil
+        _ -> {:noreply, state}
     end
-    {:noreply, state}
   end
 
   #Loop in charge of running the ph calibration.
@@ -237,7 +246,7 @@ defmodule BioMonitor.RoutineMonitor do
   def handle_info(:check_ph, state) do
     state.routine.id
     |> Helpers.fetch_reading
-    |> Helpers.process_reading(state.routine)
+    |> Helpers.process_reading(state.routine, state.target_temp)
     {:noreply, %{state | balancing_ph: false}}
   end
 

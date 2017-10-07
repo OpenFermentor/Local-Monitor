@@ -34,7 +34,8 @@ defmodule BioMonitor.RoutineView do
       ph_tolerance: routine.ph_tolerance,
       balance_ph: routine.balance_ph,
       loop_delay: routine.loop_delay,
-      temp_tolerance: routine.temp_tolerance
+      temp_tolerance: routine.temp_tolerance,
+      temp_ranges: render_temp_ranges(routine)
     }
   end
 
@@ -44,5 +45,12 @@ defmodule BioMonitor.RoutineView do
 
   def render("already_run.json", _assigns) do
     %{error: "El experimento ya fue corrido."}
+  end
+
+  defp render_temp_ranges(routine) do
+    routine.temp_ranges
+    |> Enum.map(fn range ->
+      %{temp: range.temp, from_second: range.from_second}
+    end)
   end
 end

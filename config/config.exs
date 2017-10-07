@@ -19,7 +19,7 @@ config :bio_monitor, BioMonitor.Endpoint,
 
 # Configures Elixir's Logger
 config :logger,
-  backends: [:console, Flames.Logger],
+  backends: [:console],
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
@@ -35,7 +35,8 @@ config :flames,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    port: "/dev/cu.usbmodem1421",
+    # port: "/dev/cu.usbmodem1421",
+    port: "/dev/cu.SLAB_USBtoUART",
     speed: 115_200,
     sensors: [
       temp: "getTemp",
