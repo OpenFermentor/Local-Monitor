@@ -46,7 +46,7 @@ defmodule BioMonitor.PhController do
   end
 
   def test_base_drop(conn, _params) do
-    case SensorManager.pump_acid() do
+    case SensorManager.pump_base() do
       :ok -> send_resp(conn, :no_content, "")
       {:error, message} ->
         conn

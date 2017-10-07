@@ -96,7 +96,7 @@ defmodule BioMonitor.SensorManager do
   """
   def push_acid() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "setPump 0 1:4000,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -107,7 +107,7 @@ defmodule BioMonitor.SensorManager do
   """
   def push_base() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "setPump 1 1:4000,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
