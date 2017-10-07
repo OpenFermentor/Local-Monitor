@@ -1,5 +1,6 @@
 defmodule BioMonitor.InstructionsChannel do
   use BioMonitor.Web, :channel
+  intercept(["instruction"])
 
   def join("instructions", _payload, socket) do
     {:ok, socket}
