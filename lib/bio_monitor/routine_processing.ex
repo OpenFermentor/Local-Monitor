@@ -6,6 +6,7 @@ defmodule BioMonitor.RoutineProcessing do
   alias BioMonitor.Reading
   alias BioMonitor.Repo
   alias BioMonitor.SensorManager
+  alias BioMonitor.RoutineMonitor
   alias BioMonitor.RoutineMessageBroker, as: Broker
 
   @ph_oscillation_tolerance 50
@@ -96,6 +97,10 @@ defmodule BioMonitor.RoutineProcessing do
   def process_reading({:ok, reading}, routine) do
     if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
       Broker.send_routine_error(@ph_out_of_range_message)
+      IO.puts "ROUTINE BALANCE PH #{routine.balance_ph}"
+      if routine.balance_ph do
+        start_ph_balance(reading.ph, routine.target_ph, routine.ph_tolerance)
+      end
     end
     if reading.temp - routine.target_temp < -routine.temp_tolerance do
       Broker.send_routine_error(@temp_too_low_message)
@@ -108,6 +113,15 @@ defmodule BioMonitor.RoutineProcessing do
 
   def process_reading({:error, changeset}, _routine) do
     Broker.send_reading_changeset_error(changeset)
+  end
+
+  def start_ph_balance(ph, target_ph, tolerance) do
+    if ph - target_ph < -tolerance do
+      RoutineMonitor.balance_ph_to_base()
+    end
+    if ph - target_ph > tolerance do
+      RoutineMonitor.balance_ph_to_acid()
+    end
   end
 
   def check_for_triggers(_routine, start_timestamp) do

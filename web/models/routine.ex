@@ -19,6 +19,7 @@ defmodule BioMonitor.Routine do
     field :started_date, :naive_datetime
     field :temp_tolerance, :float
     field :ph_tolerance, :float
+    field :balance_ph, :boolean
     field :loop_delay, :integer
     has_many :readings, BioMonitor.Reading, on_delete: :delete_all
 
@@ -30,7 +31,7 @@ defmodule BioMonitor.Routine do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [:title, :strain, :medium, :target_temp, :target_ph, :target_co2, :target_density, :estimated_time_seconds, :extra_notes, :uuid, :temp_tolerance, :ph_tolerance, :loop_delay])
+    |> cast(params, [:title, :strain, :medium, :target_temp, :target_ph, :target_co2, :target_density, :estimated_time_seconds, :extra_notes, :uuid, :temp_tolerance, :ph_tolerance, :loop_delay, :balance_ph])
     |> validate_required([:title, :strain, :medium, :target_temp, :target_ph, :target_density, :estimated_time_seconds])
     |> generate_uuid
   end
