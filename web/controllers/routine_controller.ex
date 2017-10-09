@@ -14,7 +14,7 @@ defmodule BioMonitor.RoutineController do
           "page" => "#{params["page"] || 1}"
         }
       })
-    routines = Repo.all(routines)
+    routines = Repo.all(routines) |> Repo.preload(:temp_ranges)
     render(conn, "index.json", routine: routines, page_info: rummage)
   end
 
@@ -22,6 +22,7 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
+        routine = routine |> Repo.preload(:temp_ranges)
         SyncServer.send("new_routine", Map.put(routine_params, :uuid, routine.uuid))
         conn
         |> put_status(:created)
@@ -35,14 +36,13 @@ defmodule BioMonitor.RoutineController do
   end
 
   def show(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id)
+    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
     render(conn, "show.json", routine: routine)
   end
 
   def update(conn, %{"id" => id, "routine" => routine_params}) do
-    routine = Repo.get!(Routine, id)
+    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
     changeset = Routine.changeset(routine, routine_params)
-
     case Repo.update(changeset) do
       {:ok, routine} ->
         SyncServer.send("update_routine", Map.put(routine_params, :uuid, routine.uuid))
@@ -67,7 +67,7 @@ defmodule BioMonitor.RoutineController do
   end
 
   def start(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id)
+    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
     with running = BioMonitor.RoutineMonitor.is_running?(),
       {:ok, false} <- running,
       :ready <- already_run(routine),

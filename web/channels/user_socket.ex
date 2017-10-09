@@ -3,6 +3,7 @@ defmodule BioMonitor.UserSocket do
 
   channel "routine", BioMonitor.RoutineChannel
   channel "sensors", BioMonitor.SensorChannel
+  channel "instructions", BioMonitor.InstructionsChannel
 
   transport :websocket, Phoenix.Transports.WebSocket
 
