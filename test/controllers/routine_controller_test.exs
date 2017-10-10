@@ -7,7 +7,7 @@ defmodule BioMonitor.RoutineControllerTest do
 
   alias BioMonitor.Routine
   alias Ecto.DateTime, as: DateTime
-  @valid_attrs %{title: Faker.File.file_name(), estimated_time_seconds: "#{Faker.Commerce.price()}", extra_notes: Faker.File.file_name(), medium: Faker.Beer.name(), strain: Faker.Beer.malt(), target_co2: "#{Faker.Commerce.price()}", target_density: "#{Faker.Commerce.price()}", target_ph: "#{Faker.Commerce.price()}", target_temp: "#{Faker.Commerce.price()}", temp_tolerance: 2, ph_tolerance: 0.6, loop_delay: 5_000, balance_ph: true}
+  @valid_attrs %{title: Faker.File.file_name(), estimated_time_seconds: "#{Faker.Commerce.price()}", extra_notes: Faker.File.file_name(), medium: Faker.Beer.name(), strain: Faker.Beer.malt(), target_co2: "#{Faker.Commerce.price()}", target_density: "#{Faker.Commerce.price()}", target_ph: "#{Faker.Commerce.price()}", target_temp: "#{Faker.Commerce.price()}", temp_tolerance: 2, ph_tolerance: 0.6, loop_delay: 5_000, balance_ph: true, trigger_after: 20_000, trigger_for: 60_000 }
   @invalid_attrs %{}
 
   setup %{conn: conn} do
@@ -43,6 +43,8 @@ defmodule BioMonitor.RoutineControllerTest do
       "inserted_at" => to_date_string(routine.inserted_at),
       "updated_at" => to_date_string(routine.updated_at),
       "temp_ranges" => [],
+      "trigger_after" => routine.trigger_after,
+      "trigger_for" => routine.trigger_for,
     }
   end
 
