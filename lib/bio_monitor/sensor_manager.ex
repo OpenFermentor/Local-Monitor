@@ -91,6 +91,18 @@ defmodule BioMonitor.SensorManager do
     end
   end
 
+
+  @doc """
+    pumps through the third bomb any substance that
+    the operator has set up for a time interval.
+  """
+  def pump_trigger(for_seconds) do
+    case send_and_read(:ph, "setPump 2 1:#{for_seconds},0") do
+      {:ok, _result} -> :ok
+      {:error, message, _description} -> {:error, message}
+    end
+  end
+
   @doc """
     pushes acid through the pump
   """

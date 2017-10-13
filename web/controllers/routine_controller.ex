@@ -62,7 +62,9 @@ defmodule BioMonitor.RoutineController do
   end
 
   def stop(conn, _params) do
-    BioMonitor.RoutineMonitor.stop_routine()
+    if !BioMonitor.RoutineMonitor.is_running?() do
+      BioMonitor.RoutineMonitor.stop_routine()
+    end
     send_resp(conn, :no_content, "")
   end
 

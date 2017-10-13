@@ -17,7 +17,7 @@ defmodule BioMonitor.RoutineMonitor do
     @moduledoc """
       Struct represetation of the RoutineMonitor's state.
     """
-    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false, target_temp: 0
+    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false, target_temp: 0, triggered_pump: false
   end
 
   alias BioMonitor.SensorManager
@@ -189,10 +189,21 @@ defmodule BioMonitor.RoutineMonitor do
     case state.loop do
       :loop ->
         Helpers.get_sensors_status()
-      _ -> nil
+        schedule_work(:loop, @loop_interval)
+        {:noreply, state}
+      :routine ->
+        if !state.balancing_ph && !state.triggered_pump do
+          pumped = Helpers.check_for_pump_trigger(state.routine, state.started)
+          schedule_work(:loop, @loop_interval)
+          {:noreply, %{state | triggered_pump: pumped}}
+        else
+          schedule_work(:loop, @loop_interval)
+          {:noreply, state}
+        end
+      _ ->
+        schedule_work(:loop, @loop_interval)
+        {:noreply, state}
     end
-    schedule_work(:loop, @loop_interval)
-    {:noreply, state}
   end
 
   #Loop in charge of fetching the readings when the routine is running
@@ -204,12 +215,12 @@ defmodule BioMonitor.RoutineMonitor do
             schedule_work(:routine, state.routine.loop_delay)
             {:noreply, state}
           false ->
-            newTemp = Helpers.get_current_temp_target(state.routine, state.started)
-            if newTemp != state.target_temp do
-              IO.puts "=====CHANGING TEMPERATURE TO: #{newTemp}===="
-              Broker.send_instruction("Por favor, colocar el circulador a #{newTemp} grados.")
+            new_temp = Helpers.get_current_temp_target(state.routine, state.started)
+            if new_temp != state.target_temp do
+              IO.puts "=====CHANGING TEMPERATURE TO: #{new_temp}===="
+              Broker.send_instruction("Por favor, colocar el circulador a #{new_temp} grados.")
             end
-            state = %{state | target_temp: newTemp}
+            state = %{state | target_temp: new_temp}
             state.routine.id
             |> Helpers.fetch_reading
             |> Helpers.process_reading(state.routine, state.target_temp)
