@@ -12,7 +12,6 @@ defmodule BioMonitor.RoutineChannel do
   end
 
   def handle_out("update", payload, socket) do
-    IO.puts("out=============================")
     push socket, "update", payload
     {:noreply, socket}
   end
