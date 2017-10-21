@@ -133,6 +133,18 @@ defmodule BioMonitor.RoutineProcessing do
     Broker.send_reading_error(message)
   end
 
+  def check_for_pump_trigger(routine, timestamp) do
+    elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
+    if elapsed_time >= routine.trigger_after do
+      case SensorManager.pump_trigger(routine.trigger_for) do
+        :ok -> true
+        {:error, _message} -> false
+      end
+    else
+      false
+    end
+  end
+
   def get_current_temp_target(routine, timestamp) do
     routine = Repo.preload(routine, :temp_ranges)
     elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
