@@ -2,8 +2,9 @@ defmodule BioMonitor.RoutineController do
   use BioMonitor.Web, :controller
 
   alias BioMonitor.Routine
-  alias BioMonitor.SyncServer
-  @routines_per_page "10"
+  alias BioMonitor.CloudSync
+
+  @routines_per_page "100"
 
   def index(conn, params) do
     {routines, rummage} =
@@ -23,7 +24,7 @@ defmodule BioMonitor.RoutineController do
     case Repo.insert(changeset) do
       {:ok, routine} ->
         routine = routine |> Repo.preload(:temp_ranges)
-        SyncServer.send("new_routine", Map.put(routine_params, :uuid, routine.uuid))
+        CloudSync.new_routine(%{"routine" => Map.put(routine_params, :uuid, routine.uuid)})
         conn
         |> put_status(:created)
         |> put_resp_header("location", routine_path(conn, :show, routine))
@@ -43,9 +44,10 @@ defmodule BioMonitor.RoutineController do
   def update(conn, %{"id" => id, "routine" => routine_params}) do
     routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
     changeset = Routine.changeset(routine, routine_params)
+    IO.inspect changeset
     case Repo.update(changeset) do
       {:ok, routine} ->
-        SyncServer.send("update_routine", Map.put(routine_params, :uuid, routine.uuid))
+        CloudSync.update_routine(%{"routine" => routine_params}, routine.uuid)
         render(conn, "show.json", routine: routine)
       {:error, changeset} ->
         conn
@@ -57,12 +59,12 @@ defmodule BioMonitor.RoutineController do
   def delete(conn, %{"id" => id}) do
     routine = Repo.get!(Routine, id)
     Repo.delete!(routine)
-    SyncServer.send("update_routine", %{"uuid" => routine.uuid})
+    CloudSync.delete_routine(routine.uuid)
     send_resp(conn, :no_content, "")
   end
 
   def stop(conn, _params) do
-    if !BioMonitor.RoutineMonitor.is_running?() do
+    if BioMonitor.RoutineMonitor.is_running?() do
       BioMonitor.RoutineMonitor.stop_routine()
     end
     send_resp(conn, :no_content, "")
