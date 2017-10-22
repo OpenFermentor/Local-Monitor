@@ -4,7 +4,7 @@ defmodule BioMonitor.RoutineController do
   alias BioMonitor.Routine
   alias BioMonitor.CloudSync
 
-  @routines_per_page "10"
+  @routines_per_page "100"
 
   def index(conn, params) do
     {routines, rummage} =
@@ -44,6 +44,7 @@ defmodule BioMonitor.RoutineController do
   def update(conn, %{"id" => id, "routine" => routine_params}) do
     routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
     changeset = Routine.changeset(routine, routine_params)
+    IO.inspect changeset
     case Repo.update(changeset) do
       {:ok, routine} ->
         CloudSync.update_routine(%{"routine" => routine_params}, routine.uuid)
@@ -63,7 +64,7 @@ defmodule BioMonitor.RoutineController do
   end
 
   def stop(conn, _params) do
-    if !BioMonitor.RoutineMonitor.is_running?() do
+    if BioMonitor.RoutineMonitor.is_running?() do
       BioMonitor.RoutineMonitor.stop_routine()
     end
     send_resp(conn, :no_content, "")
