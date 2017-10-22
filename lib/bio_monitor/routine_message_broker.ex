@@ -22,7 +22,7 @@ defmodule BioMonitor.RoutineMessageBroker do
   @instruction "instruction"
 
   alias BioMonitor.Endpoint
-  alias BioMonitor.SyncServer
+  alias BioMonitor.CloudSync
 
   def send_sensor_error(message) do
     Endpoint.broadcast(
@@ -30,7 +30,7 @@ defmodule BioMonitor.RoutineMessageBroker do
         @error_msg,
         %{status: @sensor_error, message: message}
       )
-    SyncServer.send(@error_msg, %{status: @sensor_error, message: message})
+    CloudSync.sensor_error(%{status: @sensor_error, message: message})
   end
 
   def send_system_error(message) do
@@ -44,7 +44,8 @@ defmodule BioMonitor.RoutineMessageBroker do
       @error_msg,
       %{status: @system_error, message: message}
     )
-    SyncServer.send(@alert_msg, %{status: @system_error, message: message})
+    CloudSync.alert(%{status: @system_error, message: message})
+    CloudSync.sensor_error(%{status: @system_error, message: message})
   end
 
   def send_routine_error(message) do
@@ -53,7 +54,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @alert_msg,
       %{message: message}
     )
-    SyncServer.send(@alert_msg, %{status: @routine_error, message: message})
+    CloudSync.alert(%{status: @routine_error, message: message})
   end
 
   def send_start(routine) do
@@ -62,7 +63,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @started_msg,
       %{message: "Started routine", routine: routine_to_map(routine)}
     )
-    SyncServer.send(@started_msg, routine_to_map(routine))
+    CloudSync.started_routine(routine_to_map(routine))
   end
 
   def send_stop(routine) do
@@ -71,7 +72,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       @stopped_msg,
       %{message: "Experimento finalizado", routine: routine_to_map(routine)}
     )
-    SyncServer.send(@stopped_msg, routine_to_map(routine))
+    CloudSync.stopped_routine(routine_to_map(routine))
   end
 
   def send_status(status) do
@@ -80,12 +81,12 @@ defmodule BioMonitor.RoutineMessageBroker do
       @status_msg,
       status
     )
-    SyncServer.send(@status_msg, status)
+    CloudSync.sensor_status(status)
   end
 
   def send_reading(reading, routine) do
     Endpoint.broadcast(@channel, @update_msg, reading_to_map(reading, routine))
-    SyncServer.send(@update_msg, reading_to_map(reading, routine))
+    CloudSync.new_reading(reading_to_map(reading, routine))
   end
 
   def send_reading_changeset_error(changeset) do
@@ -98,8 +99,7 @@ defmodule BioMonitor.RoutineMessageBroker do
         errors: changeset.errors
       }
     )
-    SyncServer.send(
-      @alert_msg,
+    CloudSync.alert(
       %{
         status: @routine_error,
         message: "Hubo un error al guardar una lectura.",
@@ -118,8 +118,7 @@ defmodule BioMonitor.RoutineMessageBroker do
         errors: [message]
       }
     )
-    SyncServer.send(
-      @alert_msg,
+    CloudSync.alert(
       %{
         status: @routine_error,
         message: "Hubo un error al guardar una lectura.",
@@ -136,6 +135,9 @@ defmodule BioMonitor.RoutineMessageBroker do
         message: message,
       }
     )
+    CloudSync.instruction(%{
+      message: message,
+    })
   end
 
   defp reading_to_map(reading, routine) do

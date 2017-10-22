@@ -35,19 +35,14 @@ config :flames,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    port: "/dev/cu.usbmodem1421",
-    # port: "/dev/cu.SLAB_USBtoUART",
+    # port: "/dev/cu.usbmodem1421",
+    port: "/dev/cu.SLAB_USBtoUART",
     speed: 115_200,
     sensors: [
       temp: "getTemp",
       ph: "getPh"
     ]
   ]
-
-config :bio_monitor, BioMonitor.SyncSocket,
-  # url: "wss://bio-monitor-staging.herokuapp.com/socket/websocket",
-  url: "ws://localhost:3000/socket/websocket",
-  serializer: Poison
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

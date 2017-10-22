@@ -7,7 +7,7 @@ defmodule BioMonitor.SensorChannel do
      * Routines finishing.
   """
   use Phoenix.Channel
-  intercept(["status", "error", "started", "finished"])
+  intercept(["status", "error"])
 
   def join("sensors", _payload, socket) do
     {:ok, socket}
