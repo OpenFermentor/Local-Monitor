@@ -153,14 +153,11 @@ defmodule BioMonitor.RoutineMonitor do
   end
 
   def handle_cast({:balance_ph, :to_acid}, state) do
-    IO.puts "====================="
-    IO.puts "====================="
+    IO.puts "~~~~~~~~~~~~~~~~~~~~~"
     IO.puts "Balancing PH to acid"
-    IO.puts "====================="
-    IO.puts "====================="
+    IO.puts "~~~~~~~~~~~~~~~~~~~~~"
     case SensorManager.pump_acid() do
       :ok ->
-        Process.send_after(self(), :check_ph, @ph_balance_delay)
         {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
         Broker.send_system_error(@ph_balance_error)
@@ -170,13 +167,10 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_cast({:balance_ph, :to_base}, state) do
     IO.puts "====================="
-    IO.puts "====================="
     IO.puts "Balancing PH to base"
-    IO.puts "====================="
     IO.puts "====================="
     case SensorManager.pump_base() do
       :ok ->
-        Process.send_after(self(), :check_ph, @ph_balance_delay)
         {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
         Broker.send_system_error(@ph_balance_error)
@@ -212,12 +206,15 @@ defmodule BioMonitor.RoutineMonitor do
       :routine ->
         case state.balancing_ph do
           true ->
+            reading = state.routine.id
+            |> Helpers.fetch_reading
+            |> Helpers.process_reading(state.routine, state.target_temp)
             schedule_work(:routine, state.routine.loop_delay)
-            {:noreply, state}
+            balancing_ph = Kernel.abs(reading.ph - state.routine.target_ph) > state.routine.ph_tolerance && state.routine.balance_ph
+            {:noreply, %{state | balancing_ph: balancing_ph}}
           false ->
             new_temp = Helpers.get_current_temp_target(state.routine, state.started)
             if new_temp != state.target_temp do
-              IO.puts "=====CHANGING TEMPERATURE TO: #{new_temp}===="
               Broker.send_instruction("Por favor, colocar el circulador a #{new_temp} grados.")
             end
             state = %{state | target_temp: new_temp}
@@ -252,13 +249,6 @@ defmodule BioMonitor.RoutineMonitor do
       _ ->
         {:noreply, state}
     end
-  end
-
-  def handle_info(:check_ph, state) do
-    state.routine.id
-    |> Helpers.fetch_reading
-    |> Helpers.process_reading(state.routine, state.target_temp)
-    {:noreply, %{state | balancing_ph: false}}
   end
 
   def handle_info(_, state) do

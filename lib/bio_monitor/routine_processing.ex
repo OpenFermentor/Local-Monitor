@@ -108,6 +108,7 @@ defmodule BioMonitor.RoutineProcessing do
       Broker.send_routine_error(@temp_too_high_message)
     end
     Broker.send_reading(reading, routine)
+    reading
   end
 
   def process_reading({:error, changeset}, _routine, _temp_target) do
