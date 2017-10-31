@@ -1,0 +1,436 @@
+    <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="ExDoc v0.16.2">
+    <title>BioMonitor.SerialMonitor – BioMonitor v0.0.1</title>
+    <link rel="stylesheet" href="dist/app-268c9dc719.css" />
+    
+    <script src="dist/sidebar_items-8376b3a9c4.js"></script>
+  </head>
+  <body data-type="modules">
+    <script>try { if(localStorage.getItem('night-mode')) document.body.className += ' night-mode'; } catch (e) { }</script>
+
+    <div class="main">
+<button class="sidebar-toggle">
+  <span class="icon-menu" aria-hidden="true"></span>
+  <span class="sr-only">Toggle Sidebar</span>
+</button>
+<section class="sidebar">
+
+  
+  <a href="BioMonitor.html" class="sidebar-projectLink">
+    <div class="sidebar-projectDetails">
+      <h1 class="sidebar-projectName">
+        BioMonitor
+      </h1>
+      <h2 class="sidebar-projectVersion">
+        v0.0.1
+      </h2>
+    </div>
+    
+  </a>
+
+  <div class="sidebar-search">
+    <span class="icon-search" aria-hidden="true"></span>
+    <input type="text" class="sidebar-searchInput" placeholder="search" aria-label="Search" autocomplete="off" />
+  </div>
+
+  <ul class="sidebar-listNav">
+    <li><a id="extras-list" href="#full-list">Pages</a></li>
+
+    
+      <li><a id="modules-list" href="#full-list">Modules</a></li>
+    
+
+    
+
+    
+
+    
+  </ul>
+  <div class="gradient"></div>
+  <ul id="full-list" class="sidebar-fullList"></ul>
+</section>
+
+<section class="content">
+  <div class="content-outer">
+    <div id="content" class="content-inner">
+
+
+      <h1>
+        <small class="visible-xs">BioMonitor v0.0.1</small>
+        BioMonitor.SerialMonitor
+        
+      </h1>
+
+      
+        <section id="moduledoc">
+          <p>  The SerialMonitor is in charge of the serial communication with the sensors</p>
+
+        </section>
+      
+
+      
+        <section id="summary" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#summary">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Summary
+          </h1>
+          
+
+          
+  <div class="summary-functions summary">
+    <h2>
+      <a href="#functions">Functions</a>
+    </h2>
+    <div class="summary-row">
+  <div class="summary-signature">
+    <a href="#add_sensors/2">add_sensors(pid, sensors)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Adds the sensors whose information comes through the connected device</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#clean_serial/1">clean_serial(pid)</a>
+  </div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#get_ports/1">get_ports(pid)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Returns a list of available ports and the devices connected to them</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#get_readings/1">get_readings(pid)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Retrieves the readings for the registered sensors</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#handle_call/3">handle_call(msg, from, state)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Sends the <code class="inline">command</code> to to the device</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#init/1">init(args)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>State structure:
+%{
+  serial_pid: The pid of the process that handles serial connectivity
+  port: The port information to establish a connection with the device
+  sensors: Key value pair, where the key is an atom representing the type of</p>
+<pre><code class="elixir">       the sensor, and the value is the command to fetch the data</code></pre>
+<p>}</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#send_and_read/2">send_and_read(pid, command)</a>
+  </div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#send_command/2">send_command(pid, command)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Sends a command to the sensor</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#set_port/3">set_port(pid, name, speed)</a>
+  </div>
+  
+    <div class="summary-synopsis"><p>Sets the port where the device is connected</p>
+</div>
+  
+</div>
+<div class="summary-row">
+  <div class="summary-signature">
+    <a href="#start_link/1">start_link(opts)</a>
+  </div>
+  
+</div>
+
+  </div>
+
+
+          
+
+        </section>
+      
+
+      
+
+      
+        <section id="functions" class="details-list">
+          <h1 class="section-heading">
+            <a class="hover-link" href="#functions">
+              <span class="icon-link" aria-hidden="true"></span>
+              <span class="sr-only">Link to this section</span>
+            </a>
+            Functions
+          </h1>
+          <div class="detail" id="add_sensors/2">
+  
+  <div class="detail-header">
+    <a href="#add_sensors/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">add_sensors(pid, sensors)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Adds the sensors whose information comes through the connected device</p>
+<p>pid: The PID of the running process
+sensors: Key value pair, where the key is an atom representing the type of</p>
+<pre><code class="elixir">     the sensor, and the value is the command to fetch the data</code></pre>
+<h2 id="add_sensors/2-examples" class="section-heading">
+  <a href="#add_sensors/2-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<p>add_sensor [temp: “getTemp”, ph: “getPh”]</p>
+
+  </section>
+</div>
+<div class="detail" id="clean_serial/1">
+  
+  <div class="detail-header">
+    <a href="#clean_serial/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">clean_serial(pid)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="get_ports/1">
+  
+  <div class="detail-header">
+    <a href="#get_ports/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">get_ports(pid)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Returns a list of available ports and the devices connected to them</p>
+<p>pid: The PID of the running process</p>
+
+  </section>
+</div>
+<div class="detail" id="get_readings/1">
+  
+  <div class="detail-header">
+    <a href="#get_readings/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">get_readings(pid)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Retrieves the readings for the registered sensors</p>
+<p>pid: The PID of the running process</p>
+<h2 id="get_readings/1-examples" class="section-heading">
+  <a href="#get_readings/1-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<p>If :temp and :ph sensors are defined, then the returned value would be:</p>
+<p>{:ok, [temp: “20.75”, ph: {:error, “Unrecognized Command”}]}</p>
+
+  </section>
+</div>
+<div class="detail" id="handle_call/3">
+  
+  <div class="detail-header">
+    <a href="#handle_call/3" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">handle_call(msg, from, state)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Sends the <code class="inline">command</code> to to the device</p>
+
+  </section>
+</div>
+<div class="detail" id="init/1">
+  
+  <div class="detail-header">
+    <a href="#init/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">init(args)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>State structure:
+%{
+  serial_pid: The pid of the process that handles serial connectivity
+  port: The port information to establish a connection with the device
+  sensors: Key value pair, where the key is an atom representing the type of</p>
+<pre><code class="elixir">       the sensor, and the value is the command to fetch the data</code></pre>
+<p>}</p>
+<h2 id="init/1-examples" class="section-heading">
+  <a href="#init/1-examples" class="hover-link"><span class="icon-link" aria-hidden="true"></span></a>
+  Examples
+</h2>
+
+<p>%{
+  serial_pid: 1234,
+  port: %{</p>
+<pre><code class="elixir">name: The name of the serial port where the device is connected
+speed: The speed of the serial port</code></pre>
+<p>  }
+  sensors: [</p>
+<pre><code class="elixir">%{temp =&gt; &quot;getTemp&quot;},
+%{ph =&gt; &quot;getPh&quot;}</code></pre>
+<p>  ]
+}</p>
+
+  </section>
+</div>
+<div class="detail" id="send_and_read/2">
+  
+  <div class="detail-header">
+    <a href="#send_and_read/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">send_and_read(pid, command)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    
+  </section>
+</div>
+<div class="detail" id="send_command/2">
+  
+  <div class="detail-header">
+    <a href="#send_command/2" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">send_command(pid, command)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Sends a command to the sensor.</p>
+<p>pid: The PID of the running process</p>
+<p>command: The String instruction to be sent to the sensor</p>
+
+  </section>
+</div>
+<div class="detail" id="set_port/3">
+  
+  <div class="detail-header">
+    <a href="#set_port/3" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">set_port(pid, name, speed)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    <p>Sets the port where the device is connected</p>
+<p>pid: The PID of the running process
+name: The name identifier of the port (use <code class="inline">get_ports/0</code> to retrieve it)
+speed: The speed of the serial port</p>
+
+  </section>
+</div>
+<div class="detail" id="start_link/1">
+  
+  <div class="detail-header">
+    <a href="#start_link/1" class="detail-link" title="Link to this function">
+      <span class="icon-link" aria-hidden="true"></span>
+      <span class="sr-only">Link to this function</span>
+    </a>
+    <span class="signature">start_link(opts)</span>
+    
+    
+    
+  </div>
+  <section class="docstring">
+    
+  </section>
+</div>
+
+        </section>
+      
+
+      
+          <footer class="footer">
+        <p>
+          <span class="line">
+            Built using
+            <a href="https://github.com/elixir-lang/ex_doc" title="ExDoc" rel="help" target="_blank">ExDoc</a> (v0.16.2),
+          </span>
+          <span class="line">
+            designed by
+            <a href="https://twitter.com/dignifiedquire" target="_blank" title="@dignifiedquire">Friedel Ziegelmayer</a>.
+            </span>
+        </p>
+        <button class="night-mode-toggle"><span class="sr-only">Switch theme</span></button>
+      </footer>
+    </div>
+  </div>
+</section>
+</div>
+  <script src="dist/app-4988ddd06b.js"></script>
+  </body>
+</html>
+
