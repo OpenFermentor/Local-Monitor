@@ -13,6 +13,9 @@ defmodule BioMonitor.RoutineController do
         "paginate" => %{
           "per_page" => @routines_per_page,
           "page" => "#{params["page"] || 1}"
+        },
+        "search" => %{
+          "title" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["q"]},
         }
       })
     routines = Repo.all(routines) |> Repo.preload(:temp_ranges)
