@@ -147,7 +147,7 @@ defmodule BioMonitor.RoutineProcessing do
   end
 
   def get_current_temp_target(routine, timestamp) do
-    routine = Repo.preload(routine, :temp_ranges)
+    routine = Repo.preload(routine, [:temp_ranges, :tags])
     elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
     current = routine.temp_ranges # Find the latest range (the one that should be running)
     |> Enum.filter(fn target ->
