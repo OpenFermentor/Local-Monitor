@@ -96,6 +96,7 @@ defmodule BioMonitor.RoutineProcessing do
 
   def process_reading({:ok, reading}, routine, temp_target) do
     if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
+      Routine.log_entry(routine, Routine.log_types.reading_error, @ph_out_of_range_message)
       Broker.send_routine_error(@ph_out_of_range_message)
       if routine.balance_ph do
         start_ph_balance(reading.ph, routine.target_ph, routine.ph_tolerance)
@@ -103,8 +104,10 @@ defmodule BioMonitor.RoutineProcessing do
     end
     if reading.temp - temp_target < -routine.temp_tolerance do
       Broker.send_routine_error(@temp_too_low_message)
+      Routine.log_entry(routine, Routine.log_types.reading_error, @temp_too_low_message)
     end
     if reading.temp - temp_target > routine.temp_tolerance do
+      Routine.log_entry(routine, Routine.log_types.reading_error, @temp_too_high_message)
       Broker.send_routine_error(@temp_too_high_message)
     end
     Broker.send_reading(reading, routine)
