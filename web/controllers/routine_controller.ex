@@ -13,9 +13,15 @@ defmodule BioMonitor.RoutineController do
         "paginate" => %{
           "per_page" => @routines_per_page,
           "page" => "#{params["page"] || 1}"
+        },
+        "search" => %{
+          "title" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["title"]},
+          "strain" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["strain"]},
+          "medium" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["medium"]},
+          "value" => %{"assoc" => ["tags"], "search_type" => "ilike", "search_term" => params["tag"]}
         }
       })
-    routines = Repo.all(routines) |> Repo.preload(:temp_ranges)
+    routines = Repo.all(routines) |> Repo.preload([:temp_ranges, :tags])
     render(conn, "index.json", routine: routines, page_info: rummage)
   end
 
@@ -23,7 +29,7 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
-        routine = routine |> Repo.preload(:temp_ranges)
+        routine = routine |> Repo.preload([:temp_ranges, :tags])
         CloudSync.new_routine(%{"routine" => Map.put(routine_params, :uuid, routine.uuid)})
         conn
         |> put_status(:created)
@@ -37,14 +43,13 @@ defmodule BioMonitor.RoutineController do
   end
 
   def show(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
     render(conn, "show.json", routine: routine)
   end
 
   def update(conn, %{"id" => id, "routine" => routine_params}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
     changeset = Routine.changeset(routine, routine_params)
-    IO.inspect changeset
     case Repo.update(changeset) do
       {:ok, routine} ->
         CloudSync.update_routine(%{"routine" => routine_params}, routine.uuid)
@@ -71,7 +76,7 @@ defmodule BioMonitor.RoutineController do
   end
 
   def start(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
     with running = BioMonitor.RoutineMonitor.is_running?(),
       {:ok, false} <- running,
       :ready <- already_run(routine),

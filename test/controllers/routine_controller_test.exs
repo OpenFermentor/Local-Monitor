@@ -43,6 +43,7 @@ defmodule BioMonitor.RoutineControllerTest do
       "inserted_at" => to_date_string(routine.inserted_at),
       "updated_at" => to_date_string(routine.updated_at),
       "temp_ranges" => [],
+      "tags" => [],
       "trigger_after" => routine.trigger_after,
       "trigger_for" => routine.trigger_for,
     }
