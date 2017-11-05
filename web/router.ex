@@ -32,6 +32,7 @@ defmodule BioMonitor.Router do
     # API services for business entities.
     resources "/routines", RoutineController, except: [:new, :edit] do
       resources "/readings", ReadingController, except: [:new, :edit, :update]
+      resources "/log_entries", LogEntryController, only: [:index]
       get "/to_csv", RoutineController, :to_csv
     end
   end

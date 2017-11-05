@@ -4,6 +4,11 @@ defmodule BioMonitor.Routine do
     Model used to define routines.
   """
 
+  alias BioMonitor.LogEntry
+  alias BioMonitor.Repo
+
+  @log_types %{reading_error: "reading_error", base_cal: "base_cal", acid_cal: "acid_cal", temp_change: "temp_change", system_error: "system_error"}
+
   schema "routines" do
     field :title, :string
     field :strain, :string
@@ -24,6 +29,7 @@ defmodule BioMonitor.Routine do
     field :trigger_after, :integer
     field :trigger_for, :integer
     has_many :readings, BioMonitor.Reading, on_delete: :delete_all
+    has_many :log_entries, BioMonitor.LogEntry, on_delete: :delete_all
     has_many :temp_ranges, BioMonitor.TempRange, on_delete: :delete_all, on_replace: :delete
     has_many :tags, BioMonitor.Tag, on_delete: :delete_all, on_replace: :delete
 
@@ -49,6 +55,17 @@ defmodule BioMonitor.Routine do
     struct
     |> cast(params, [:started, :started_date])
     |> validate_required([:started, :started_date])
+  end
+
+  def log_types, do: @log_types
+
+  def log_entry(routine, type, description) do
+    case Ecto.build_assoc(routine, :log_entries)
+      |> LogEntry.changeset(%{type: type, description: description})
+      |> Repo.insert() do
+      {:ok, _log_entry} -> :ok
+      {:error, _changeset} -> :error
+    end
   end
 
   defp generate_uuid(changeset) do

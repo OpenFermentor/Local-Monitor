@@ -4,6 +4,7 @@ defmodule BioMonitor.RoutineMonitor do
   @moduledoc """
     The RoutineMonitor is in charge of controlling the currently running routine.
   """
+  alias BioMonitor.Routine
 
   @name RoutineMonitor
   # TODO change both intervals to higher values
@@ -102,6 +103,7 @@ defmodule BioMonitor.RoutineMonitor do
             {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
           {:error, message} ->
             Broker.send_reading_error(message)
+            Routine.log_entry(state.routine, Routine.log_types.reading_error, message)
             {:reply, {:error, "Error al conectar con los sensores", message}, state}
         end
     end
@@ -109,7 +111,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call(:stop, _from, state) do
     Broker.send_stop(state.routine)
-    {:reply, :ok, %{state | loop: :loop, routine: %{}}}
+    {:reply, {:ok, state.routine}, %{state | loop: :loop, routine: %{}}}
   end
 
   def handle_call({:update, routine}, _from, state) do
@@ -147,6 +149,7 @@ defmodule BioMonitor.RoutineMonitor do
       {:ok, _message} ->
         schedule_work(:loop, @loop_interval)
       {:error, _message} ->
+        Routine.log_entry(state.routine, Routine.log_types.system_error, @uknown_sensor_error)
         Broker.send_sensor_error(@uknown_sensor_error)
     end
     {:reply, :ok, state}
@@ -158,8 +161,11 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts "~~~~~~~~~~~~~~~~~~~~~"
     case SensorManager.pump_acid() do
       :ok ->
+        Routine.log_entry(state.routine, Routine.log_types.acid_cal,
+        "Bomba de ácido activada")
         {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
+        Routine.log_entry(state.routine, Routine.log_types.system_error, @ph_balance_error)
         Broker.send_system_error(@ph_balance_error)
         {:noreply, %{state | balancing_ph: false}}
     end
@@ -171,8 +177,10 @@ defmodule BioMonitor.RoutineMonitor do
     IO.puts "====================="
     case SensorManager.pump_base() do
       :ok ->
+        Routine.log_entry(state.routine, Routine.log_types.base_cal, "Bomba de base activada")
         {:noreply, %{state | balancing_ph: true}}
       {:error, _message} ->
+        Routine.log_entry(state.routine, Routine.log_types.system_error, @ph_balance_error)
         Broker.send_system_error(@ph_balance_error)
         {:noreply, %{state | balancing_ph: false}}
     end
@@ -209,12 +217,13 @@ defmodule BioMonitor.RoutineMonitor do
             reading = state.routine.id
             |> Helpers.fetch_reading
             |> Helpers.process_reading(state.routine, state.target_temp)
-            schedule_work(:routine, state.routine.loop_delay)
+            schedule_work(:routine, @ph_balance_delay)
             balancing_ph = Kernel.abs(reading.ph - state.routine.target_ph) > state.routine.ph_tolerance && state.routine.balance_ph
             {:noreply, %{state | balancing_ph: balancing_ph}}
           false ->
             new_temp = Helpers.get_current_temp_target(state.routine, state.started)
             if new_temp != state.target_temp do
+              Routine.log_entry(state.routine, Routine.log_types.temp_change, "Cambió la temperatura objetivo a #{new_temp} grados.")
               Broker.send_instruction("Por favor, colocar el circulador a #{new_temp} grados.")
             end
             state = %{state | target_temp: new_temp}
@@ -239,7 +248,8 @@ defmodule BioMonitor.RoutineMonitor do
             {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: result}}}
           false ->
             case SensorManager.get_ph_offset() do
-              :error -> {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
+              :error ->
+                {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
               value ->
                 ph_cal_upd = value |> Helpers.add_value_to_ph_cal(state.ph_cal)
                 schedule_work(:ph_cal, @ph_cal_interval)
