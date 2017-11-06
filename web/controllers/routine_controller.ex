@@ -70,7 +70,7 @@ defmodule BioMonitor.RoutineController do
 
   def stop(conn, _params) do
     if BioMonitor.RoutineMonitor.is_running?() do
-      {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
+      {:ok, _routine} = BioMonitor.RoutineMonitor.stop_routine()
     end
     send_resp(conn, :no_content, "")
   end

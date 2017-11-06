@@ -241,7 +241,7 @@ defmodule BioMonitor.RoutineMonitor do
   def handle_info(:ph_cal, state) do
     case state.loop do
       :ph_cal ->
-        result = Helpers.set_ph_target(state.ph_cal.target)
+        result = Helpers.calibrate_ph_for_target(state.ph_cal.target)
         {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, status: result}}}
       _ -> {:noreply, state}
     end
