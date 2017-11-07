@@ -71,6 +71,8 @@ defmodule BioMonitor.RoutineController do
   def stop(conn, _params) do
     if BioMonitor.RoutineMonitor.is_running?() do
       {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
+      routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
+      CloudSync.update_routine(routine_updated)
     end
     send_resp(conn, :no_content, "")
   end
