@@ -58,26 +58,14 @@ defmodule BioMonitor.RoutineProcessing do
     end
   end
 
-  def send_ph_offset(target, offset) do
+  def calibrate_ph_for_target(target) do
     case target do
-      7 -> SensorManager.set_ph_offset("neutral", 7, offset)
-      4 -> SensorManager.set_ph_offset("acid", 4, offset)
-      10 -> SensorManager.set_ph_offset("base", 10, offset)
+      7 -> SensorManager.calibratePh("neutral")
+      4 -> SensorManager.calibratePh("acid")
+      10 -> SensorManager.calibratePh("base")
     end
   end
 
-  def add_value_to_ph_cal(new_value, ph_cal) do
-    case Enum.count(ph_cal.values) >= 10 do
-      true ->
-        %{
-          ph_cal | values: ph_cal.values
-            |> List.delete_at(0)
-            |> List.insert_at(-1, new_value)
-        }
-      false ->
-        %{ph_cal| values: ph_cal.values |> List.insert_at(-1, new_value)}
-    end
-  end
 
   def save_routine_sart_timestamp(routine) do
     changeset = routine

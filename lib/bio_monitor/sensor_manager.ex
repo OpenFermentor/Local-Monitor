@@ -51,21 +51,11 @@ defmodule BioMonitor.SensorManager do
     end
   end
 
-  def get_ph_offset do
-    with {:ok, value} <- send_and_read(:ph, "getPhOffset"),
-      {:ok, parsed_value} <- parse_reading(value)
-    do
-      parsed_value
-    else
-      _ -> :error
-    end
-  end
-
   @doc """
     sets the offset of the ph sensor for calibration
   """
-  def set_ph_offset(target, value,  offset) do
-    case send_and_read(:ph, "setPhOffset #{target} #{value} #{offset}") do
+  def calibratePh(type) do
+    case send_and_read(:ph, "calibratePh #{type}") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end

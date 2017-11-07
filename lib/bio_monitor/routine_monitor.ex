@@ -9,7 +9,7 @@ defmodule BioMonitor.RoutineMonitor do
   @name RoutineMonitor
   # TODO change both intervals to higher values
   @loop_interval 2_000
-  @ph_cal_interval 1_000
+  @ph_cal_interval 90_000
   @ph_balance_delay 60_000
   @ph_balance_error "Ha ocurrido un error al intentar corregir el ph, por favor revise la conexión de las bombas."
   @uknown_sensor_error "Ha ocurrido un error inesperado al obtener el estado de los sensores, por favor, revise las conexiones con la placa."
@@ -18,7 +18,7 @@ defmodule BioMonitor.RoutineMonitor do
     @moduledoc """
       Struct represetation of the RoutineMonitor's state.
     """
-    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, values: [], status: :not_started}, started: 0, balancing_ph: false, target_temp: 0, triggered_pump: false
+    defstruct loop: :loop, routine: %{}, ph_cal: %{target: 7, status: :not_started}, started: 0, balancing_ph: false, target_temp: 0, triggered_pump: false
   end
 
   alias BioMonitor.SensorManager
@@ -124,7 +124,7 @@ defmodule BioMonitor.RoutineMonitor do
         {:reply, :routine_in_progress, state}
       _ ->
         schedule_work(:ph_cal, @ph_cal_interval)
-        {:reply, :ok, %{state | loop: :ph_cal, ph_cal: %{target: target, values: [], status: :started}}}
+        {:reply, :ok, %{state | loop: :ph_cal, ph_cal: %{target: target, status: :started}}}
     end
   end
 
@@ -238,28 +238,15 @@ defmodule BioMonitor.RoutineMonitor do
     end
   end
 
-  #Loop in charge of running the ph calibration.
   def handle_info(:ph_cal, state) do
     case state.loop do
       :ph_cal ->
-        case Helpers.is_offset_stable?(state.ph_cal) do
-          true ->
-            result = Helpers.send_ph_offset(state.ph_cal.target, Math.Enum.mean(state.ph_cal.values))
-            {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: result}}}
-          false ->
-            case SensorManager.get_ph_offset() do
-              :error ->
-                {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, values: [], status: :error}}}
-              value ->
-                ph_cal_upd = value |> Helpers.add_value_to_ph_cal(state.ph_cal)
-                schedule_work(:ph_cal, @ph_cal_interval)
-                {:noreply, %{state | ph_cal: ph_cal_upd}}
-            end
-        end
-      _ ->
-        {:noreply, state}
+        result = Helpers.calibrate_ph_for_target(state.ph_cal.target)
+        {:noreply, %{state | loop: :loop, ph_cal: %{target: state.ph_cal.target, status: result}}}
+      _ -> {:noreply, state}
     end
   end
+
 
   def handle_info(_, state) do
     IO.puts("Uknown message received.")
