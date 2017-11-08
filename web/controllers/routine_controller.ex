@@ -72,7 +72,9 @@ defmodule BioMonitor.RoutineController do
     if BioMonitor.RoutineMonitor.is_running?() do
       {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
       routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
-      CloudSync.update_routine(routine_updated)
+      routine_updated
+        |> CloudSync.routine_to_map
+        |> CloudSync.update_routine(routine.uuid)
     end
     send_resp(conn, :no_content, "")
   end
@@ -118,12 +120,13 @@ defmodule BioMonitor.RoutineController do
       |> CSV.encode(headers: [:temp, :ph, :density, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
 
-    conn
+    conn = conn
       |> put_resp_header("Content-Disposition", "attachment; filename=#{path}")
       |> send_file(200, path)
 
     File.close(file)
     File.rm(path)
+    conn
   end
 
   def restart(conn, _params) do
