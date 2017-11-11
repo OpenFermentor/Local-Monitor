@@ -116,6 +116,16 @@ defmodule BioMonitor.SensorManager do
   end
 
   @doc """
+    Get the status of each sensor
+  """
+  def get_sensors_status() do
+    case send_and_read(:temp, "getStatus") do
+      {:ok, result} -> parse_sensors_status(result)
+      {:error, message, _description} -> {:error, message}
+    end
+  end
+
+  @doc """
     Fetchs all readings from the SerialMonitors and parse them.
   """
   def get_readings do
@@ -125,8 +135,8 @@ defmodule BioMonitor.SensorManager do
     do
       {:ok, %{temp: temp, ph: ph, co2: 0, density: 0}}
     else
-      :error ->
-        {:error, "Hubo un error al obtener las lecturas"}
+      {:error, message} ->
+        {:error, "Hubo un error al obtener las lecturas: #{message}"}
       _ ->
         {:error, "Error inesperado, por favor revise la conexión con la placa."}
     end
@@ -194,12 +204,33 @@ defmodule BioMonitor.SensorManager do
   end
 
   defp parse_reading(reading) do
-    with true <- reading != nil,
-      {parsed_reading, _} <- Float.parse(reading)
-    do
-      {:ok, parsed_reading}
-    else
-      _ -> :error
+    case reading do
+      nil -> {:error, "No se pudo obtener la lectura"}
+      "ERROR" -> {:error, "Error interno de la placa"}
+      {:error, message} -> {:error, message}
+      reading -> case Float.parse(reading) do
+        {parsed_reading, _} -> {:ok, parsed_reading}
+        _ -> {:error, "Hubo un error al conectarse con la placa"}
+      end
+    end
+  end
+
+  defp parse_sensors_status(response) do
+    case response do
+      "ERROR" -> {:error, "Error interno de la placa"}
+      response ->
+        strings = String.split(response, ",")
+          |> Enum.map(fn val ->
+            String.split(val, ":")
+          end)
+        {
+          :ok,
+         %{
+          pumps: strings |> Enum.at(0) |> Enum.at(1),
+          ph: strings |> Enum.at(1) |> Enum.at(1),
+          temp: strings |> Enum.at(2) |> Enum.at(1)
+          }
+        }
     end
   end
 

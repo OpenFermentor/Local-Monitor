@@ -16,7 +16,7 @@ defmodule BioMonitor.RoutineProcessing do
   @temp_too_low_message "La temperatura está por debajo del rango establecido."
 
   def get_sensors_status do
-    case SensorManager.get_readings()  do
+    case SensorManager.get_sensors_status()  do
       {:ok, data} ->
         Broker.send_status(data)
       {:error, message} ->
