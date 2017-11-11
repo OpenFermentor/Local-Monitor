@@ -4,7 +4,7 @@ defmodule BioMonitor.RoutineController do
   alias BioMonitor.Routine
   alias BioMonitor.CloudSync
 
-  @routines_per_page "100"
+  @routines_per_page "20"
 
   def index(conn, params) do
     {routines, rummage} =
@@ -86,6 +86,7 @@ defmodule BioMonitor.RoutineController do
       :ready <- already_run(routine),
       :ok <- BioMonitor.RoutineMonitor.start_routine(routine)
     do
+      IO.inspect routine
       render(conn, "show.json", routine: routine)
     else
       {:error, _, message} ->
