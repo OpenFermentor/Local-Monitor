@@ -24,7 +24,7 @@ defmodule BioMonitor.Mixfile do
      applications: [:flames, :phoenix, :phoenix_pubsub, :cowboy, :logger, :gettext,
                     :cors_plug, :csv, :nerves_uart,
                     :rummage_ecto, :uuid, :phoenix_ecto, :postgrex,
-                    :elixir_make, :httpotion]]
+                    :elixir_make, :httpotion, :rollbax]]
   end
 
   # Specifies which paths to compile per environment.
@@ -54,6 +54,7 @@ defmodule BioMonitor.Mixfile do
       {:math, "~> 0.3.0"},
       {:flames, "~> 0.3.2"},
       {:httpotion, "~> 3.0.2"},
+      {:rollbax, "~> 0.8.2"},
     ]
   end
 
