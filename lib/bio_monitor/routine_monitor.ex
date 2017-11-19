@@ -227,11 +227,13 @@ defmodule BioMonitor.RoutineMonitor do
               Broker.send_instruction("Por favor, colocar el circulador a #{new_temp} grados.")
             end
             state = %{state | target_temp: new_temp}
-            state.routine.id
+            reading = state.routine.id
             |> Helpers.fetch_reading
             |> Helpers.process_reading(state.routine, state.target_temp)
             Helpers.check_for_triggers(state.routine, state.started)
-            schedule_work(:routine, state.routine.loop_delay)
+            balancing_ph = Kernel.abs(reading.ph - state.routine.target_ph) > state.routine.ph_tolerance && state.routine.balance_ph
+            delay = if balancing_ph, do: @ph_balance_delay, else: state.routine.loop_delay
+            schedule_work(:routine, delay)
             {:noreply, state}
         end
         _ -> {:noreply, state}
