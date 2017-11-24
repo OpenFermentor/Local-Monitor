@@ -231,9 +231,13 @@ defmodule BioMonitor.RoutineMonitor do
             |> Helpers.fetch_reading
             |> Helpers.process_reading(state.routine, state.target_temp)
             Helpers.check_for_triggers(state.routine, state.started)
-            balancing_ph = Kernel.abs(reading.ph - state.routine.target_ph) > state.routine.ph_tolerance && state.routine.balance_ph
-            delay = if balancing_ph, do: @ph_balance_delay, else: state.routine.loop_delay
-            schedule_work(:routine, delay)
+            case reading do
+              {:ok, reading} ->
+                balancing_ph = Kernel.abs(reading.ph - state.routine.target_ph) > state.routine.ph_tolerance && state.routine.balance_ph
+                delay = if balancing_ph, do: @ph_balance_delay, else: state.routine.loop_delay
+                schedule_work(:routine, delay)
+              _ -> schedule_work(:routine, state.routine.loop_delay)
+            end
             {:noreply, state}
         end
         _ -> {:noreply, state}

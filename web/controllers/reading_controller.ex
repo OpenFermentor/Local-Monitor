@@ -3,6 +3,7 @@ defmodule BioMonitor.ReadingController do
 
   alias BioMonitor.Reading
   alias BioMonitor.Routine
+  alias BioMonitor.SensorManager
 
   def index(conn, %{"routine_id" => routine_id}) do
     with routine = Repo.get(Routine, routine_id),
@@ -25,27 +26,37 @@ defmodule BioMonitor.ReadingController do
   def create(conn, %{"routine_id" => routine_id, "reading" => reading_params}) do
     with routine = Repo.get(Routine, routine_id),
       true <- routine != nil,
-      reading <- Ecto.build_assoc(routine, :readings),
-      changeset <- Reading.changeset(reading, reading_params),
-      {:ok, reading} <- Repo.insert(changeset)
+      {:ok, reading_data} <- SensorManager.get_readings()
     do
-      conn
-        |> put_status(:created)
-        |> put_resp_header("location", routine_reading_path(conn, :show, reading.routine_id, reading))
-        |> render("show.json", reading: reading)
-    else
-      {:error, changeset} ->
+      with reading_data_string_keys = reading_data |> Enum.reduce(%{}, fn {k, v}, map -> Map.put(map, Atom.to_string(k), v) end),
+        all_reading_params = Map.merge(reading_data_string_keys, reading_params),
+        reading <- Ecto.build_assoc(routine, :readings),
+        changeset <- Reading.changeset(reading, all_reading_params),
+        {:ok, reading} <- Repo.insert(changeset)
+      do
         conn
-        |> put_status(:unprocessable_entity)
-        |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
+          |> put_status(:created)
+          |> put_resp_header("location", routine_reading_path(conn, :show, reading.routine_id, reading))
+          |> render("show.json", reading: reading)
+      else
+        {:error, changeset} ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> render(BioMonitor.ChangesetView, "error.json", changeset: changeset)
+        _ ->
+          conn
+          |> put_status(500)
+          |> render(BioMonitor.ErrorView, "500.json")
+      end
+    else
       false ->
         conn
         |> put_status(:not_found)
         |> render(BioMonitor.ErrorView, "404.json")
-      _ ->
+      {:error, message} ->
         conn
-        |> put_status(500)
-        |> render(BioMonitor.ErrorView, "500.json")
+        |> put_status(:unprocessable_entity)
+        |> render(BioMonitor.ErrorView, "error.json", message: message)
     end
   end
 
