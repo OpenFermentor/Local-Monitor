@@ -8,8 +8,9 @@ defmodule BioMonitor.Reading do
   schema "readings" do
     field :temp, :float
     field :ph, :float
-    field :co2, :float
-    field :density, :float
+    field :biomass, :float
+    field :observancy, :float
+    field :substratum, :float
     belongs_to :routine, BioMonitor.Routine
 
     timestamps()
@@ -20,7 +21,7 @@ defmodule BioMonitor.Reading do
   """
   def changeset(struct, params \\ %{}) do
     struct
-    |> cast(params, [:temp, :ph, :co2, :density, :routine_id])
+    |> cast(params, [:temp, :ph, :biomass, :substratum, :observancy, :routine_id])
     |> validate_required([:temp, :routine_id])
   end
 end

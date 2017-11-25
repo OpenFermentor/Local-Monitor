@@ -13,8 +13,9 @@ defmodule BioMonitor.ReadingView do
     %{id: reading.id,
       temp: reading.temp,
       ph: reading.ph,
-      co2: reading.co2,
-      density: reading.density,
+      substratum: reading.substratum,
+      observancy: reading.observancy,
+      biomass: reading.biomass,
       inserted_at: reading.inserted_at,
       routine_id: reading.routine_id}
   end

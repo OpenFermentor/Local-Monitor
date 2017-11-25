@@ -133,7 +133,11 @@ defmodule BioMonitor.SensorManager do
       {:ok, temp} <- parse_reading(arduino_readings[:temp]),
       {:ok, ph} <- parse_reading(arduino_readings[:ph])
     do
-      {:ok, %{temp: temp, ph: ph, co2: 0, density: 0}}
+      IO.puts "~~~~~~~~~~~~~~~~~~~~~"
+      IO.puts "~~Temp is: #{temp}~~~"
+      IO.puts "~~Ph is: #{ph}~~~~~~~"
+      IO.puts "~~~~~~~~~~~~~~~~~~~~~"
+      {:ok, %{temp: temp, ph: ph}}
     else
       {:error, message} ->
         {:error, "Hubo un error al obtener las lecturas: #{message}"}

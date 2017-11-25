@@ -16,9 +16,10 @@ defmodule BioMonitor.RoutineController do
         },
         "search" => %{
           "title" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["title"]},
-          "strain" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["strain"]},
-          "medium" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["medium"]},
-          "value" => %{"assoc" => ["tags"], "search_type" => "ilike", "search_term" => params["tag"]}
+          # TODO: Fix this to use OR instead of And on rummage query.
+          # "strain" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["strain"]},
+          # "medium" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["medium"]},
+          # "value" => %{"assoc" => ["tags"], "search_type" => "ilike", "search_term" => params["tag"]}
         }
       })
     routines = Repo.all(routines) |> Repo.preload([:temp_ranges, :tags])
