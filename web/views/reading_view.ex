@@ -5,8 +5,8 @@ defmodule BioMonitor.ReadingView do
     %{data: render_many(readings, BioMonitor.ReadingView, "reading.json")}
   end
 
-  def render("show.json", %{reading: reading}) do
-    %{data: render_one(reading, BioMonitor.ReadingView, "reading.json")}
+  def render("q_values.json", %{values: values}) do
+    %{data: render_many(values, BioMonitor.ReadingView, "result.json")}
   end
 
   def render("reading.json", %{reading: reading}) do
@@ -18,5 +18,12 @@ defmodule BioMonitor.ReadingView do
       biomass: reading.biomass,
       inserted_at: reading.inserted_at,
       routine_id: reading.routine_id}
+  end
+
+  def render("result.json", %{reading: result}) do
+    %{
+      x: result.x,
+      y: result.y
+    }
   end
 end

@@ -20,37 +20,6 @@ defmodule BioMonitor.ReadingControllerTest do
     assert json_response(conn, 200)["data"] == []
   end
 
-  test "shows chosen resource", %{conn: conn} do
-    routine = Routine.changeset(%Routine{}, @routine_valid_attrs)
-      |> Repo.insert!()
-    reading = Ecto.build_assoc(routine, :readings, %{})
-      |> Reading.changeset(@valid_attrs)
-      |> Repo.insert!()
-    conn = get conn, routine_reading_path(conn, :show, routine.id, reading)
-    assert json_response(conn, 200)["data"] == %{"id" => reading.id,
-      "temp" => reading.temp,
-      "ph" => reading.ph,
-      "substratum" => reading.substratum,
-      "observancy" => reading.observancy,
-      "biomass" => reading.biomass,
-      "inserted_at" => to_date_string(reading.inserted_at),
-      "routine_id" => reading.routine_id}
-  end
-
-  test "renders page not found when id is nonexistent", %{conn: conn} do
-    assert_error_sent 404, fn ->
-      get conn, routine_reading_path(conn, :show, 1, -1)
-    end
-  end
-
-  test "creates and renders resource when data is valid", %{conn: conn} do
-    routine = Routine.changeset(%Routine{}, @routine_valid_attrs)
-      |> Repo.insert!()
-    conn = post conn, routine_reading_path(conn, :create, routine.id), reading: @valid_attrs
-    assert json_response(conn, 201)["data"]["id"]
-    assert Repo.get_by(Reading, @valid_attrs)
-  end
-
   test "does not create resource and renders errors when data is invalid", %{conn: conn} do
     routine = Routine.changeset(%Routine{}, @routine_valid_attrs)
       |> Repo.insert!()

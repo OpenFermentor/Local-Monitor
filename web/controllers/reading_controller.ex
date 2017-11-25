@@ -4,6 +4,7 @@ defmodule BioMonitor.ReadingController do
   alias BioMonitor.Reading
   alias BioMonitor.Routine
   alias BioMonitor.SensorManager
+  alias BioMonitor.RoutineCalculations
 
   def index(conn, %{"routine_id" => routine_id}) do
     with routine = Repo.get(Routine, routine_id),
@@ -11,6 +12,32 @@ defmodule BioMonitor.ReadingController do
     do
       routine = Repo.preload(routine, :readings)
       render(conn, "index.json", readings: routine.readings)
+    else
+      false ->
+        conn
+        |> put_status(:not_found)
+        |> render(BioMonitor.ErrorView, "404.json")
+      _ ->
+        conn
+        |> put_status(500)
+        |> render(BioMonitor.ErrorView, "500.json")
+    end
+  end
+
+  def calculate_q(conn, %{"routine_id" => routine_id}) do
+    with routine = Repo.get(Routine, routine_id),
+      true <- routine != nil
+    do
+      case routine.started_date do
+        nil ->
+          conn
+          |> put_status(:unprocessable_entity)
+          |> render(BioMonitor.ErrorView, "error.json", message: "Este experimento no fue corrido todavia.")
+        started_date ->
+          readings = Repo.preload(routine, :readings).readings
+          q_values = RoutineCalculations.calculate_q(readings, started_date)
+          render(conn, "q_values.json", values: q_values)
+      end
     else
       false ->
         conn
@@ -58,11 +85,6 @@ defmodule BioMonitor.ReadingController do
         |> put_status(:unprocessable_entity)
         |> render(BioMonitor.ErrorView, "error.json", message: message)
     end
-  end
-
-  def show(conn, %{"routine_id" => routine_id, "id" => id}) do
-    reading = Repo.get!(Reading, id)
-    render(conn, "show.json", routine_id: routine_id, reading: reading)
   end
 
   def delete(conn, %{"id" => id}) do
