@@ -4,7 +4,7 @@ defmodule BioMonitor.Repo.Migrations.AddParamsToReadings do
   def change do
     alter table(:readings) do
       add :biomass, :float, default: 0
-      add :observancy, :float, default: 0
+      add :product, :float, default: 0
       add :substratum, :float, default: 0
       remove :co2
       remove :density
