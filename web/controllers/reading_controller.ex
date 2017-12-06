@@ -35,7 +35,7 @@ defmodule BioMonitor.ReadingController do
           |> render(BioMonitor.ErrorView, "error.json", message: "Este experimento no fue corrido todavia.")
         started_date ->
           readings = Repo.preload(routine, :readings).readings
-          q_values = RoutineCalculations.calculate_q(readings, started_date)
+          q_values = RoutineCalculations.specific_ph_velocity(readings, started_date)
           render(conn, "q_values.json", values: q_values)
       end
     else

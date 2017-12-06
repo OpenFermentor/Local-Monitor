@@ -30,19 +30,20 @@ defmodule BioMonitor.RoutineCalculations do
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
         case last_value do
           nil ->
-            acc |> List.insert_at(-1, %Result{x: time, y: (reading.biomass / reading.substratum)})
+            acc |> List.insert_at(-1, %PartialResult{x: time, y: (reading.biomass / reading.substratum), reading: reading})
           last ->
             acc
             |> List.insert_at(
               -1,
-              %Result{
+              %PartialResult{
                 x: time,
-                y: (reading.biomass - last.reading.biomass) / (reading.substratum - last.reading.substratum)
+                y: (reading.biomass - last.reading.biomass) / (reading.substratum - last.reading.substratum),
+                reading: reading
               }
             )
         end
       end
-    )
+    )  |> Enum.map(fn partial_result -> %Result{x: partial_result.x, y: partial_result.y} end)
   end
 
   @doc """
@@ -57,26 +58,26 @@ defmodule BioMonitor.RoutineCalculations do
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
         case last_value do
           nil ->
-            acc |> List.insert_at(-1, %Result{x: time, y: (reading.biomass / reading.product)})
+            acc |> List.insert_at(-1, %PartialResult{x: time, y: (reading.biomass / reading.product), reading: reading})
           last ->
             acc
             |> List.insert_at(
               -1,
-              %Result{
+              %PartialResult{
                 x: time,
-                y: (reading.biomass - last.reading.biomass) / (reading.product - last.reading.product)
+                y: (reading.biomass - last.reading.biomass) / (reading.product - last.reading.product),
+                reading: reading
               }
             )
         end
       end
-    )
+    )  |> Enum.map(fn partial_result -> %Result{x: partial_result.x, y: partial_result.y} end)
   end
 
   @doc """
     Calculates all performance for each reading.
     returns: [{ x: seconds elapsed, y: dProduct/dBiomass}]
   """
-  # TODO: Rename this when rodrigo explains it's meaning
   def inverse_product_performance(readings, started_timestamp) do
     readings |> Enum.reduce(
       [],
@@ -85,19 +86,20 @@ defmodule BioMonitor.RoutineCalculations do
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
         case last_value do
           nil ->
-            acc |> List.insert_at(-1, %Result{x: time, y: (reading.product / reading.biomass)})
+            acc |> List.insert_at(-1, %PartialResult{x: time, y: (reading.product / reading.biomass), reading: reading})
           last ->
             acc
             |> List.insert_at(
               -1,
-              %Result{
+              %PartialResult{
                 x: time,
-                y: (reading.product - last.reading.product) / (reading.biomass - last.reading.biomass)
+                y: (reading.product - last.reading.product) / (reading.biomass - last.reading.biomass),
+                reading: reading
               }
             )
         end
       end
-    )
+    ) |> Enum.map(fn partial_result -> %Result{x: partial_result.x, y: partial_result.y} end)
   end
 
   @doc """
@@ -111,19 +113,20 @@ defmodule BioMonitor.RoutineCalculations do
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
         case last_value do
           nil ->
-            acc |> List.insert_at(-1, %Result{x: time, y: (reading.product / time)})
+            acc |> List.insert_at(-1, %PartialResult{x: time, y: (reading.product / time), reading: reading})
           last ->
             acc
             |> List.insert_at(
               -1,
-              %Result{
+              %PartialResult{
                 x: time,
-                y: (reading.product - last.reading.product) / (time - last.x)
+                y: (reading.product - last.reading.product) / (time - last.x),
+                reading: reading
               }
             )
         end
       end
-    )
+    ) |> Enum.map(fn partial_result -> %Result{x: partial_result.x, y: partial_result.y} end)
   end
 
   @doc """
@@ -137,61 +140,69 @@ defmodule BioMonitor.RoutineCalculations do
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
         case last_value do
           nil ->
-            acc |> List.insert_at(-1, %Result{x: time, y: (reading.biomass / time)})
+            acc |> List.insert_at(-1, %PartialResult{x: time, y: (reading.biomass / time), reading: reading})
           last ->
             acc
             |> List.insert_at(
               -1,
-              %Result{
+              %PartialResult{
                 x: time,
-                y: (reading.biomass - last.reading.biomass) / (time - last.x)
+                y: (reading.biomass - last.reading.biomass) / (time - last.x),
+                reading: reading
               }
             )
         end
       end
-    )
+    ) |> Enum.map(fn partial_result -> %Result{x: partial_result.x, y: partial_result.y} end)
   end
 
   @doc """
-    Calculates the maximum point for biomass performance
-    using the biomass Q values calculated on the function defined before
+    Calculates de specific ph velocity for each reading.
   """
-  def max_biomass_performance(biomass_results) do
-    first_val = biomass_results |> List.first
-    biomass_results
+  def specific_ph_velocity(readings, started_timestamp) do
+    results = readings |> Enum.reduce([],
+      fn reading, acc ->
+        last_value = acc |> List.last
+        time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
+        case last_value do
+          nil ->
+            result = %PartialResult{
+              y: (1/reading.ph),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+          last_val ->
+            result = %PartialResult{
+              y: (1/(reading.ph - last_val.reading.ph)),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+        end
+      end
+    )
+    results.results
+    |> Enum.map(fn partial_result ->
+      %Result{x: partial_result.x, y: partial_result.y}
+    end)
+  end
+
+  @doc """
+    Calculates de maximium point for a list of Results by comparing it's y values.
+    Returns a %Result with the value and the time it happened.
+  """
+  def calculate_max_point(results) do
+    first_val = results |> List.first
+    results
     |> Enum.reduce(
-      first_val.y,
+      first_val,
       fn result, acc ->
-        case result.y > acc do
-          true -> result.y
+        case result.y > acc.y do
+          true -> result
           false -> acc
         end
       end
     )
-  end
-
-  @doc """
-    Calculates q sub ph for al points.
-  """
-  def calculate_q(readings, started_timestamp) do
-    readings |> Enum.reduce([],
-      fn reading, acc ->
-        acc |> List.insert_at(-1, derivate_point(reading, List.last(acc), started_timestamp))
-      end
-    ) |> Enum.map(fn r -> %Result{x: r.x, y: r.y} end)
-  end
-
-  defp derivate_point(reading, nil, started_timestamp) do
-    y = reading.ph
-    x = reading.inserted_at
-    d_time = NaiveDateTime.diff(started_timestamp, x)
-    %PartialResult{x: x, y: y/d_time, reading: reading}
-  end
-
-  defp derivate_point(reading, last_value, _started_timestamp) do
-    y = reading.ph - last_value.reading.y
-    x = reading.inserted_at
-    d_time = NaiveDateTime.diff(x, last_value.x)
-    %PartialResult{x: x, y: y/d_time, reading: reading}
   end
 end
