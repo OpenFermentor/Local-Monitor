@@ -209,6 +209,70 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
+    Calculates de specific biomass velocity for each reading.
+  """
+  def specific_biomass_velocity(readings, started_timestamp) do
+    results = readings |> Enum.reduce([],
+      fn reading, acc ->
+        last_value = acc |> List.last
+        time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
+        case last_value do
+          nil ->
+            result = %PartialResult{
+              y: (1/reading.biomass),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+          last_val ->
+            result = %PartialResult{
+              y: (1/(reading.biomass - last_val.reading.biomass)),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+        end
+      end
+    )
+    results.results
+    |> Enum.map(fn partial_result ->
+      %Result{x: partial_result.x, y: partial_result.y}
+    end)
+  end
+
+  @doc """
+    Calculates de specific product velocity for each reading.
+  """
+  def specific_product_velocity(readings, started_timestamp) do
+    results = readings |> Enum.reduce([],
+      fn reading, acc ->
+        last_value = acc |> List.last
+        time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
+        case last_value do
+          nil ->
+            result = %PartialResult{
+              y: (1/reading.product),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+          last_val ->
+            result = %PartialResult{
+              y: (1/(reading.product - last_val.reading.product)),
+              x: time,
+              reading: reading
+            }
+            acc |> List.insert_at(-1, result)
+        end
+      end
+    )
+    results.results
+    |> Enum.map(fn partial_result ->
+      %Result{x: partial_result.x, y: partial_result.y}
+    end)
+  end
+
+  @doc """
     Calculates de maximium point for a list of Results by comparing it's y values.
     Returns a %Result with the value and the time it happened.
   """
