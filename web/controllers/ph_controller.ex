@@ -18,9 +18,15 @@ defmodule BioMonitor.PhController do
   end
 
   def calibration_status(conn, _params) do
-    status = RoutineMonitor.ph_cal_status()
-    conn
-    |> render("status.json", status)
+    case RoutineMonitor.ph_cal_status() do
+      %{target: _target, status: {:error, message}} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> render(ErrorView, "error.json", %{message: message})
+      status = %{target: _target, status: _status} ->
+        conn
+        |> render("status.json", status)
+    end
   end
 
   def set_base(conn, _params) do
