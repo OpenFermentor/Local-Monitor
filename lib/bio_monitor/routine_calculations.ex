@@ -23,7 +23,11 @@ defmodule BioMonitor.RoutineCalculations do
     returns: [{ x: seconds elapsed, y: dBiomass/dSubstratum}]
   """
   def biomass_performance(readings, started_timestamp) do
-    readings |> Enum.reduce(
+    readings
+    |> Enum.filter(fn reading ->
+      reading.biomass != nil && reading.biomass != 0 && reading.substratum != nil && reading.substratum != 0
+    end)
+    |> Enum.reduce(
       [],
       fn reading, acc ->
         last_value = acc |> List.last
@@ -51,7 +55,11 @@ defmodule BioMonitor.RoutineCalculations do
     returns: [{ x: seconds elapsed, y: dBiomass/dProduct}]
   """
   def product_performance(readings, started_timestamp) do
-    readings |> Enum.reduce(
+    readings
+    |> Enum.filter(fn reading ->
+      reading.biomass != nil && reading.biomass != 0 && reading.product != nil && reading.product != 0
+    end)
+    |> Enum.reduce(
       [],
       fn reading, acc ->
         last_value = acc |> List.last
@@ -79,7 +87,11 @@ defmodule BioMonitor.RoutineCalculations do
     returns: [{ x: seconds elapsed, y: dProduct/dBiomass}]
   """
   def inverse_product_performance(readings, started_timestamp) do
-    readings |> Enum.reduce(
+    readings
+    |> Enum.filter(fn reading ->
+      reading.biomass != nil && reading.biomass != 0 && reading.product != nil && reading.product != 0
+    end)
+    |> Enum.reduce(
       [],
       fn reading, acc ->
         last_value = acc |> List.last
@@ -106,7 +118,11 @@ defmodule BioMonitor.RoutineCalculations do
     Calculates de Product Q for every point.
   """
   def product_q_values(readings, started_timestamp) do
-    readings |> Enum.reduce(
+    readings
+    |> Enum.filter(fn reading ->
+      reading.product != nil && reading.product != 0
+    end)
+    |> Enum.reduce(
       [],
       fn reading, acc ->
         last_value = acc |> List.last
@@ -133,7 +149,11 @@ defmodule BioMonitor.RoutineCalculations do
     Calculates de Biomass Q for every point.
   """
   def biomass_q_values(readings, started_timestamp) do
-    readings |> Enum.reduce(
+    readings
+    |> Enum.filter(fn reading ->
+      reading.biomass != nil && reading.biomass != 0
+    end)
+    |> Enum.reduce(
       [],
       fn reading, acc ->
         last_value = acc |> List.last
