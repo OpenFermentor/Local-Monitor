@@ -19,6 +19,52 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
+    Generates all calculations for a set of readings at once.
+    Returns a map with the following values:
+    %{
+      biomass_performance,
+      product_performance,
+      product_biomass_performance,
+      product_volumetric_performance,
+      biomass_volumetric_performance,
+      max_product_volumetric_performance,
+      max_biomass_volumetric_performance,
+      specific_ph_velocity,
+      specific_biomass_velocity,
+      specific_product_velocity,
+      max_ph_velocity,
+      max_biomass_velocity,
+      max_product_velocity
+    }
+    All values are Arrays of type %Result{x, y}
+  """
+  def build_calculations(readings, started_timestamp) do
+    product_volumetric_performance = product_volumetric_performance(readings, started_timestamp)
+    biomass_volumetric_performance = biomass_volumetric_performance(readings, started_timestamp)
+    specific_ph_velocity = specific_ph_velocity(readings, started_timestamp)
+    specific_biomass_velocity = specific_biomass_velocity(readings, started_timestamp)
+    specific_product_velocity = specific_product_velocity(readings, started_timestamp)
+    max_ph_velocity = calculate_max_point(specific_ph_velocity)
+    max_biomass_velocity = calculate_max_point(specific_biomass_velocity)
+    max_product_velocity = calculate_max_point(specific_product_velocity)
+    %{
+      biomass_performance: biomass_performance(readings, started_timestamp),
+      product_performance: product_performance(readings, started_timestamp),
+      product_biomass_performance: product_biomass_performance(readings, started_timestamp),
+      product_volumetric_performance: product_volumetric_performance,
+      biomass_volumetric_performance: biomass_volumetric_performance,
+      max_product_volumetric_performance: calculate_max_point(product_volumetric_performance),
+      max_biomass_volumetric_performance: calculate_max_point(biomass_volumetric_performance),
+      specific_ph_velocity: specific_ph_velocity,
+      specific_biomass_velocity: specific_biomass_velocity,
+      specific_product_velocity: specific_product_velocity,
+      max_ph_velocity: max_ph_velocity,
+      max_biomass_velocity: max_biomass_velocity,
+      max_product_velocity: max_product_velocity
+    }
+  end
+
+  @doc """
     Calculates all biomass performance for each reading.
     returns: [{ x: seconds elapsed, y: dBiomass/dSubstratum}]
   """
@@ -83,10 +129,10 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
-    Calculates all performance for each reading.
+    Calculates all product biomass performance for each reading.
     returns: [{ x: seconds elapsed, y: dProduct/dBiomass}]
   """
-  def inverse_product_performance(readings, started_timestamp) do
+  def product_biomass_performance(readings, started_timestamp) do
     readings
     |> Enum.filter(fn reading ->
       reading.biomass != nil && reading.biomass != 0 && reading.product != nil && reading.product != 0
@@ -115,9 +161,9 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
-    Calculates de Product Q for every point.
+    Calculates de Product volumetric performance for every point.
   """
-  def product_q_values(readings, started_timestamp) do
+  def product_volumetric_performance(readings, started_timestamp) do
     readings
     |> Enum.filter(fn reading ->
       reading.product != nil && reading.product != 0
@@ -146,9 +192,9 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
-    Calculates de Biomass Q for every point.
+    Calculates de Biomass volumetric performance for every point.
   """
-  def biomass_q_values(readings, started_timestamp) do
+  def biomass_volumetric_performance(readings, started_timestamp) do
     readings
     |> Enum.filter(fn reading ->
       reading.biomass != nil && reading.biomass != 0
@@ -180,7 +226,7 @@ defmodule BioMonitor.RoutineCalculations do
     Calculates de specific ph velocity for each reading.
   """
   def specific_ph_velocity(readings, started_timestamp) do
-    results = readings |> Enum.reduce([],
+    readings |> Enum.reduce([],
       fn reading, acc ->
         last_value = acc |> List.last
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
@@ -193,8 +239,10 @@ defmodule BioMonitor.RoutineCalculations do
             }
             acc |> List.insert_at(-1, result)
           last_val ->
+            diff = reading.ph - last_val.reading.ph
+            delta = if diff == 0, do: 0, else: 1/diff
             result = %PartialResult{
-              y: (1/(reading.ph - last_val.reading.ph)),
+              y: delta,
               x: time,
               reading: reading
             }
@@ -202,7 +250,6 @@ defmodule BioMonitor.RoutineCalculations do
         end
       end
     )
-    results.results
     |> Enum.map(fn partial_result ->
       %Result{x: partial_result.x, y: partial_result.y}
     end)
@@ -212,7 +259,11 @@ defmodule BioMonitor.RoutineCalculations do
     Calculates de specific biomass velocity for each reading.
   """
   def specific_biomass_velocity(readings, started_timestamp) do
-    results = readings |> Enum.reduce([],
+    readings
+    |> Enum.filter(fn reading ->
+      reading.biomass != nil && reading.biomass != 0
+    end)
+    |> Enum.reduce([],
       fn reading, acc ->
         last_value = acc |> List.last
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
@@ -225,8 +276,10 @@ defmodule BioMonitor.RoutineCalculations do
             }
             acc |> List.insert_at(-1, result)
           last_val ->
+            diff = reading.biomass - last_val.reading.biomass
+            delta = if diff == 0, do: 0, else: 1/diff
             result = %PartialResult{
-              y: (1/(reading.biomass - last_val.reading.biomass)),
+              y: delta,
               x: time,
               reading: reading
             }
@@ -234,7 +287,6 @@ defmodule BioMonitor.RoutineCalculations do
         end
       end
     )
-    results.results
     |> Enum.map(fn partial_result ->
       %Result{x: partial_result.x, y: partial_result.y}
     end)
@@ -244,7 +296,11 @@ defmodule BioMonitor.RoutineCalculations do
     Calculates de specific product velocity for each reading.
   """
   def specific_product_velocity(readings, started_timestamp) do
-    results = readings |> Enum.reduce([],
+    readings
+    |> Enum.filter(fn reading ->
+      reading.product != nil && reading.product != 0
+    end)
+    |> Enum.reduce([],
       fn reading, acc ->
         last_value = acc |> List.last
         time = NaiveDateTime.diff(reading.inserted_at, started_timestamp)
@@ -257,8 +313,10 @@ defmodule BioMonitor.RoutineCalculations do
             }
             acc |> List.insert_at(-1, result)
           last_val ->
+            diff = reading.product - last_val.reading.product
+            delta = if diff == 0, do: 0, else: 1/diff
             result = %PartialResult{
-              y: (1/(reading.product - last_val.reading.product)),
+              y: delta,
               x: time,
               reading: reading
             }
@@ -266,7 +324,6 @@ defmodule BioMonitor.RoutineCalculations do
         end
       end
     )
-    results.results
     |> Enum.map(fn partial_result ->
       %Result{x: partial_result.x, y: partial_result.y}
     end)
