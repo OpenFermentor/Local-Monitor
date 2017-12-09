@@ -4,7 +4,7 @@ defmodule BioMonitor.PhView do
   def render("show.json", %{current_value: value}) do
     render_current_value(value)
   end
-
+  
   def render("status.json", %{target: target, status: status}) do
     %{
       calibration_target: target,

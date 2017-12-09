@@ -122,7 +122,7 @@ defmodule BioMonitor.RoutineController do
     file = File.open!(Path.expand(path), [:write, :utf8])
 
     routine.readings
-      |> CSV.encode(headers: [:temp, :ph, :density, :observancy, :biomass, :inserted_at])
+      |> CSV.encode(headers: [:temp, :ph, :density, :product, :biomass, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
 
     conn = conn

@@ -24,7 +24,7 @@ defmodule BioMonitor.ReadingController do
     end
   end
 
-  def calculate_q(conn, %{"routine_id" => routine_id}) do
+  def calculations(conn, %{"routine_id" => routine_id}) do
     with routine = Repo.get(Routine, routine_id),
       true <- routine != nil
     do
@@ -32,11 +32,11 @@ defmodule BioMonitor.ReadingController do
         nil ->
           conn
           |> put_status(:unprocessable_entity)
-          |> render(BioMonitor.ErrorView, "error.json", message: "Este experimento no fue corrido todavia.")
+          |> render(BioMonitor.ErrorView, "error.json", message: "Este experimento no fue ejecutado todavia.")
         started_date ->
           readings = Repo.preload(routine, :readings).readings
-          q_values = RoutineCalculations.calculate_q(readings, started_date)
-          render(conn, "q_values.json", values: q_values)
+          calculations = RoutineCalculations.build_calculations(readings, started_date)
+          render(conn, "calculations.json", values: calculations)
       end
     else
       false ->

@@ -14,7 +14,7 @@ defmodule BioMonitor.LogEntryController do
         |> render(BioMonitor.ErrorView, "404.json")
       _ ->
         conn
-        |> put_status(500)
+        |> put_status(:internal_server_error)
         |> render(BioMonitor.ErrorView, "500.json")
     end
   end
