@@ -147,7 +147,7 @@ defmodule BioMonitor.RoutineMessageBroker do
       id: reading.id,
       temp: reading.temp,
       ph: reading.ph,
-      observancy: reading.observancy,
+      product: reading.product,
       biomass: reading.biomass,
       substratum: reading.substratum,
       inserted_at: reading.inserted_at

@@ -70,14 +70,17 @@ defmodule BioMonitor.RoutineController do
   end
 
   def stop(conn, _params) do
-    if BioMonitor.RoutineMonitor.is_running?() do
-      {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
-      routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
-      routine_updated
-        |> CloudSync.routine_to_map
-        |> CloudSync.update_routine(routine.uuid)
+    IO.puts "Stopping"
+    case BioMonitor.RoutineMonitor.is_running?() do
+      {:ok, true} ->
+        {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
+        routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
+        routine_updated
+          |> CloudSync.routine_to_map
+          |> CloudSync.update_routine(routine.uuid)
+          send_resp(conn, :no_content, "")
+      _ -> send_resp(conn, :no_content, "")
     end
-    send_resp(conn, :no_content, "")
   end
 
   def start(conn, %{"id" => id}) do
@@ -119,7 +122,7 @@ defmodule BioMonitor.RoutineController do
     file = File.open!(Path.expand(path), [:write, :utf8])
 
     routine.readings
-      |> CSV.encode(headers: [:temp, :ph, :density, :observancy, :biomass, :inserted_at])
+      |> CSV.encode(headers: [:temp, :ph, :density, :product, :biomass, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
 
     conn = conn
