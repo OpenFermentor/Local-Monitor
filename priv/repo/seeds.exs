@@ -41,7 +41,7 @@ routine = routine |> BioMonitor.Repo.preload([:temp_ranges, :tags, :log_entries,
 BioMonitor.Routine.started_changeset(routine, %{started: true, started_date: DateTime.utc_now}) |> BioMonitor.Repo.update!()
 
 # ==================== 1st hour ===================================
-
+:timer.sleep(5000)
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
   temp: 31,
@@ -52,7 +52,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por debajo del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -64,7 +64,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por debajo del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -73,7 +73,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por debajo del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -85,7 +85,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.temp_change, "Cambio de temperatura objetivo a 37 grados.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # ============================ 2nd hour ================================================================================================
 
@@ -99,7 +99,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por debajo del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -111,7 +111,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por debajo del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -134,7 +134,7 @@ BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.base_cal, "Balanceando el ph a base.")
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.temp_change, "Cambio de temperatura objetivo a 32 grados.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # ======================== 3rd hour ===============================================
 
@@ -150,7 +150,7 @@ BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "El ph esta por debajo del rango establecido.")
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.base_cal, "Balanceando el ph a base.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -164,7 +164,7 @@ BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "El ph esta por debajo del rango establecido.")
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.base_cal, "Balanceando el ph a base.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -176,7 +176,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
 }) |> BioMonitor.Repo.insert!()
 BioMonitor.Routine.log_entry(routine, BioMonitor.Routine.log_types.reading_error, "La temperatura esta por encima del rango establecido.")
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -187,7 +187,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 42
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # =============== 4th hour =====================================
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
@@ -199,7 +199,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -210,7 +210,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -221,7 +221,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -232,7 +232,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # =============== 5th hour =====================================
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
@@ -244,7 +244,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -255,7 +255,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -266,7 +266,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -277,7 +277,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # =============== 6th hour =====================================
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
@@ -289,7 +289,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -300,7 +300,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -311,7 +311,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -322,7 +322,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # =============== 7th hour =====================================
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
@@ -334,7 +334,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -345,7 +345,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -356,7 +356,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -367,7 +367,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   product: 41
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 # =============== 8th hour =====================================
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
@@ -376,7 +376,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   ph: 6,
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -384,7 +384,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   ph: 6,
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
@@ -392,7 +392,7 @@ BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   ph: 6,
 }) |> BioMonitor.Repo.insert!()
 
-:timer.sleep(2000)
+:timer.sleep(5000)
 
 BioMonitor.Reading.changeset(%BioMonitor.Reading{}, %{
   routine_id: routine.id,
