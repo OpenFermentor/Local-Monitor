@@ -61,11 +61,11 @@ defmodule BioMonitor.ReadingController do
           |> render(BioMonitor.ErrorView, "error.json", message: "Este experimento no fue ejecutado todavia.")
         started_date ->
           readings = Repo.preload(routine, :readings).readings
-          calculations = RoutineCalculations.build_calculations(readings, started_date)
+          calculations = RoutineCalculations.build_csv_calculations(readings, started_date)
           path = "#{routine.title}_calculations.csv"
           file = File.open!(Path.expand(path), [:write, :utf8])
           calculations
-            |> CSV.encode(headers: [:biomass_performance, :product_performance, :product_biomass_performance, :product_volumetric_performance, :biomass_volumetric_performance, :specific_ph_velocity, :specific_biomass_velocity, :specific_product_velocity])
+            |> CSV.encode(headers: [:time_in_seconds, :biomass_performance, :product_performance, :product_biomass_performance, :product_volumetric_performance, :biomass_volumetric_performance, :specific_ph_velocity, :specific_biomass_velocity, :specific_product_velocity])
             |> Enum.each(&IO.write(file, &1))
 
           conn = conn

@@ -65,6 +65,43 @@ defmodule BioMonitor.RoutineCalculations do
   end
 
   @doc """
+    Builds the calculations with a format suitable for table rendering.
+  """
+  def build_csv_calculations(readings, started_timestamp) do
+    biomass_performance = biomass_performance(readings, started_timestamp)
+    product_performance = product_performance(readings, started_timestamp)
+    product_biomass_performance = product_biomass_performance(readings, started_timestamp)
+    product_volumetric_performance = product_volumetric_performance(readings, started_timestamp)
+    biomass_volumetric_performance = biomass_volumetric_performance(readings, started_timestamp)
+    specific_ph_velocity = specific_ph_velocity(readings, started_timestamp)
+    specific_biomass_velocity = specific_biomass_velocity(readings, started_timestamp)
+    specific_product_velocity = specific_product_velocity(readings, started_timestamp)
+    Enum.zip([
+      biomass_performance,
+      product_performance,
+      product_biomass_performance,
+      product_volumetric_performance,
+      biomass_volumetric_performance,
+      specific_ph_velocity,
+      specific_biomass_velocity,
+      specific_product_velocity
+    ])
+    |> Enum.map(fn tuple ->
+      %{
+        time_in_seconds: elem(tuple, 0).x,
+        biomass_performance: elem(tuple, 0).y,
+        product_performance: elem(tuple, 1).y,
+        product_biomass_performance: elem(tuple, 2).y,
+        product_volumetric_performance: elem(tuple, 3).y,
+        biomass_volumetric_performance: elem(tuple, 4).y,
+        specific_ph_velocity: elem(tuple, 5).y,
+        specific_biomass_velocity: elem(tuple, 6).y,
+        specific_product_velocity: elem(tuple, 7).y,
+      }
+    end)
+  end
+
+  @doc """
     Calculates all biomass performance for each reading.
     returns: [{ x: seconds elapsed, y: dBiomass/dSubstratum}]
   """
