@@ -51,7 +51,7 @@ defmodule BioMonitor.SerialMonitor do
 
   ## Examples
 
-  add_sensor [temp: "getTemp", ph: "getPh"]
+  add_sensor [temp: "GT", ph: "GP"]
   """
   def add_sensors(pid, sensors) do
     GenServer.call(pid, {:add_sensors, %{sensors: sensors}})
@@ -108,8 +108,8 @@ defmodule BioMonitor.SerialMonitor do
       speed: The speed of the serial port
     }
     sensors: [
-      %{temp => "getTemp"},
-      %{ph => "getPh"}
+      %{temp => "GT"},
+      %{ph => "GP"}
     ]
   }
   """
@@ -152,8 +152,8 @@ defmodule BioMonitor.SerialMonitor do
   ## Examples
 
   [
-    %{temp => "getTemp"},
-    %{ph => "getPh"}
+    %{temp => "GT"},
+    %{ph => "GP"}
   ]
   """
   def handle_call({:add_sensors, %{sensors: sensors}}, _from, state) do

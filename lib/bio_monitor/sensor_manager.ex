@@ -55,7 +55,7 @@ defmodule BioMonitor.SensorManager do
     sets the offset of the ph sensor for calibration
   """
   def calibratePh(type) do
-    case send_and_read(:ph, "calibratePh #{type}") do
+    case send_and_read(:ph, "CP #{type}") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -65,7 +65,7 @@ defmodule BioMonitor.SensorManager do
     sets on the acid pump to drop.
   """
   def pump_acid() do
-    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "SP 0 1:185,0:15,2:100,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -75,7 +75,7 @@ defmodule BioMonitor.SensorManager do
     sets on the base pump to drop.
   """
   def pump_base() do
-    case send_and_read(:ph, "setPump 1 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "SP 1 1:185,0:15,2:100,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -87,7 +87,7 @@ defmodule BioMonitor.SensorManager do
     the operator has set up for a time interval.
   """
   def pump_trigger(for_seconds) do
-    case send_and_read(:ph, "setPump 2 1:#{for_seconds},0") do
+    case send_and_read(:ph, "SP 2 1:#{for_seconds},0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -98,7 +98,7 @@ defmodule BioMonitor.SensorManager do
   """
   def push_acid() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 0 1:4000,0") do
+    case send_and_read(:ph, "SP 0 1:4000,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -109,7 +109,7 @@ defmodule BioMonitor.SensorManager do
   """
   def push_base() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 1 1:4000,0") do
+    case send_and_read(:ph, "SP 1 1:4000,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -119,7 +119,7 @@ defmodule BioMonitor.SensorManager do
     Get the status of each sensor
   """
   def get_sensors_status() do
-    case send_and_read(:temp, "getStatus") do
+    case send_and_read(:temp, "GS") do
       {:ok, result} -> parse_sensors_status(result)
       {:error, message, _description} -> {:error, message}
     end
@@ -150,7 +150,7 @@ defmodule BioMonitor.SensorManager do
     Sends a command for an specific sensor.
     sensor should be one of the previously reigstered sensors.
 
-    example send_command(:temp, "getTemp")
+    example send_command(:temp, "GT")
     returns:
       * {:ok, result}
       * {:error, message}
@@ -172,7 +172,7 @@ defmodule BioMonitor.SensorManager do
     Sends a command for an specific sensor and reads the response.
     sensor should be one of the previously reigstered sensors.
 
-    example send_command(:temp, "getTemp")
+    example send_command(:temp, "GT")
     returns:
       * {:ok, result}
       * {:error, message}
@@ -195,7 +195,7 @@ defmodule BioMonitor.SensorManager do
   # [
   # %{
   #   port: "dummy port",
-  #   sensors: [temp: "getTemp", ph: "getPh"],
+  #   sensors: [temp: "GT, ph: "GP"],
   #   speed: 9600
   #  }
   #]

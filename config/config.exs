@@ -39,8 +39,8 @@ config :bio_monitor, BioMonitor.SensorManager,
     port: "/dev/cu.SLAB_USBtoUART",
     speed: 115_200,
     sensors: [
-      temp: "getTemp",
-      ph: "getPh"
+      temp: "GT",
+      ph: "GP"
     ]
   ]
 
