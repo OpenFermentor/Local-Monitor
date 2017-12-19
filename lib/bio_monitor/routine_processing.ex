@@ -60,9 +60,9 @@ defmodule BioMonitor.RoutineProcessing do
 
   def calibrate_ph_for_target(target) do
     case target do
-      7 -> SensorManager.calibratePh("neutral")
-      4 -> SensorManager.calibratePh("acid")
-      10 -> SensorManager.calibratePh("base")
+      7 -> SensorManager.calibratePh("N")
+      4 -> SensorManager.calibratePh("A")
+      10 -> SensorManager.calibratePh("B")
     end
   end
 
