@@ -103,7 +103,7 @@ defmodule BioMonitor.RoutineMonitor do
             {:reply, {:error, "Error al guardar en la BD", "Error al actualizar el experimento"}, state}
           {:error, message} ->
             Broker.send_reading_error(message)
-            Routine.log_entry(state.routine, Routine.log_types.reading_error, message)
+            Routine.log_entry(routine, Routine.log_types.reading_error, message)
             {:reply, {:error, "Error al conectar con los sensores", message}, state}
         end
     end
