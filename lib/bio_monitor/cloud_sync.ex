@@ -3,23 +3,35 @@ defmodule BioMonitor.CloudSync do
     Module in charge of sending all the sync information to the cloud backend.
   """
 
-  # @base_url "https://bio-monitor-staging.herokuapp.com/api"
-  @base_url "http://localhost:3000/api"
+  @base_url "https://bio-monitor-staging.herokuapp.com/api"
+  # @base_url "http://localhost:3000/api"
   @headers [Accept: "application/json", "Content-Type": "application/json"]
 
   def new_routine(routine) do
     case HTTPotion.post("#{@base_url}/routines", [body: Poison.encode!(routine), headers: @headers]) do
-      %HTTPotion.Response{body: _body, status_code: _status} -> :ok
+      %HTTPotion.Response{body: body, status_code: status} ->
+        IO.inspect status
+        IO.inspect body
+        :ok
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
-      _ -> :error
+        IO.inspect :failed_to_connect
+      _ ->
+        IO.inspect "Uknown error"
+        :error
     end
   end
 
   def update_routine(routine, uid) do
     case HTTPotion.put("#{@base_url}/routines/#{uid}/sync_update", [body: Poison.encode!(routine), headers: @headers]) do
-      %HTTPotion.Response{body: _body, status_code: _status} -> :ok
+      %HTTPotion.Response{body: body, status_code: status} ->
+        IO.inspect status
+        IO.inspect body
+        :ok
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
-      _ -> :error
+        IO.inspect :failed_to_connect
+      _ ->
+        IO.inspect "Uknown error"
+        :error
     end
   end
 

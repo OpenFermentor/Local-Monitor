@@ -101,8 +101,7 @@ defmodule BioMonitor.ReadingController do
       do
         conn
           |> put_status(:created)
-          |> put_resp_header("location", routine_reading_path(conn, :show, reading.routine_id, reading))
-          |> render("show.json", reading: reading)
+          |> render("reading.json", reading: reading)
       else
         {:error, changeset} ->
           conn

@@ -31,7 +31,9 @@ defmodule BioMonitor.RoutineController do
     case Repo.insert(changeset) do
       {:ok, routine} ->
         routine = routine |> Repo.preload([:temp_ranges, :tags])
-        CloudSync.new_routine(%{"routine" => Map.put(routine_params, :uuid, routine.uuid)})
+        routine
+        |> CloudSync.routine_to_map
+        |> CloudSync.new_routine
         conn
         |> put_status(:created)
         |> put_resp_header("location", routine_path(conn, :show, routine))
@@ -49,11 +51,13 @@ defmodule BioMonitor.RoutineController do
   end
 
   def update(conn, %{"id" => id, "routine" => routine_params}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
     changeset = Routine.changeset(routine, routine_params)
     case Repo.update(changeset) do
       {:ok, routine} ->
-        CloudSync.update_routine(%{"routine" => routine_params}, routine.uuid)
+        routine
+        |> CloudSync.routine_to_map
+        |> CloudSync.update_routine(routine.uuid)
         render(conn, "show.json", routine: routine)
       {:error, changeset} ->
         conn
