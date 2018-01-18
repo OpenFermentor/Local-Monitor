@@ -55,9 +55,11 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(routine, routine_params)
     case Repo.update(changeset) do
       {:ok, routine} ->
-        routine
+        routine_updated = Repo.preload(routine, [:temp_ranges, :tags, :log_entries, :readings])
+        routine_updated
         |> CloudSync.routine_to_map
         |> CloudSync.update_routine(routine.uuid)
+        CloudSync.batch_reading_sync(routine_updated.uuid, routine_updated.readings)
         render(conn, "show.json", routine: routine)
       {:error, changeset} ->
         conn
@@ -78,10 +80,11 @@ defmodule BioMonitor.RoutineController do
     case BioMonitor.RoutineMonitor.is_running?() do
       {:ok, true} ->
         {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
-        routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
+        routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries, :readings])
         routine_updated
-          |> CloudSync.routine_to_map
-          |> CloudSync.update_routine(routine.uuid)
+        |> CloudSync.routine_to_map
+        |> CloudSync.update_routine(routine.uuid)
+        CloudSync.batch_reading_sync(routine_updated.uuid, routine_updated.readings)
           send_resp(conn, :no_content, "")
       _ -> send_resp(conn, :no_content, "")
     end

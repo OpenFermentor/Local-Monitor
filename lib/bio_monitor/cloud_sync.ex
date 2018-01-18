@@ -3,35 +3,23 @@ defmodule BioMonitor.CloudSync do
     Module in charge of sending all the sync information to the cloud backend.
   """
 
-  @base_url "https://bio-monitor-staging.herokuapp.com/api"
-  # @base_url "http://localhost:3000/api"
+  # @base_url "https://bio-monitor-staging.herokuapp.com/api"
+  @base_url "http://localhost:2000/api"
   @headers [Accept: "application/json", "Content-Type": "application/json"]
 
   def new_routine(routine) do
     case HTTPotion.post("#{@base_url}/routines", [body: Poison.encode!(routine), headers: @headers]) do
-      %HTTPotion.Response{body: body, status_code: status} ->
-        IO.inspect status
-        IO.inspect body
-        :ok
+      %HTTPotion.Response{body: _body, status_code: _status} -> :ok
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
-        IO.inspect :failed_to_connect
-      _ ->
-        IO.inspect "Uknown error"
-        :error
+      _ -> :error
     end
   end
 
   def update_routine(routine, uid) do
     case HTTPotion.put("#{@base_url}/routines/#{uid}/sync_update", [body: Poison.encode!(routine), headers: @headers]) do
-      %HTTPotion.Response{body: body, status_code: status} ->
-        IO.inspect status
-        IO.inspect body
-        :ok
+      %HTTPotion.Response{body: _body, status_code: _status} -> :ok
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
-        IO.inspect :failed_to_connect
-      _ ->
-        IO.inspect "Uknown error"
-        :error
+      _ -> :error
     end
   end
 
@@ -67,6 +55,22 @@ defmodule BioMonitor.CloudSync do
     end
   end
 
+
+  def batch_reading_sync(uid, readings) do
+    case HTTPotion.post("#{@base_url}/sync/all_readings", [body: Poison.encode!(%{routine_uuid: uid, readings: encode_readings(uid, readings)}), headers: @headers]) do
+      %HTTPotion.Response{body: body, status_code: status} ->
+        IO.puts "Batch sync"
+        IO.inspect status
+        IO.inspect body
+        :ok
+      %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
+        IO.inspect :failed_to_connect
+      _ ->
+        IO.inspect "Uknown error"
+        :error
+    end
+  end
+
   def alert(params) do
     case HTTPotion.post("#{@base_url}/sync/alert", [body: Poison.encode!(params), headers: @headers]) do
       %HTTPotion.Response{body: _body, status_code: _status} -> :ok
@@ -97,6 +101,21 @@ defmodule BioMonitor.CloudSync do
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
       _ -> :error
     end
+  end
+
+  defp encode_readings(uuid, readings) do
+    readings |> Enum.map(fn reading ->
+      %{
+        routine_uuid: uuid,
+        id: reading.id,
+        temp: reading.temp,
+        ph: reading.ph,
+        product: reading.product,
+        biomass: reading.biomass,
+        substratum: reading.substratum,
+        inserted_at: reading.inserted_at
+      }
+    end)
   end
 
   def routine_to_map(routine) do
