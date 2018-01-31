@@ -25,6 +25,12 @@ defmodule BioMonitor.ReadingView do
     }
   end
 
+  def render("created_reading.json", %{reading: reading}) do
+    %{
+      data: render("reading.json", %{reading: reading})
+    }
+  end
+
   def render("reading.json", %{reading: reading}) do
     %{
       id: reading.id,

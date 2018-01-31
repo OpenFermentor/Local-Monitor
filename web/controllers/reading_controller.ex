@@ -101,7 +101,7 @@ defmodule BioMonitor.ReadingController do
       do
         conn
           |> put_status(:created)
-          |> render("reading.json", reading: reading)
+          |> render("created_reading.json", reading: reading)
       else
         {:error, changeset} ->
           conn
