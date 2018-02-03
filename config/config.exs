@@ -35,8 +35,9 @@ config :flames,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    # port: "/dev/cu.usbmodem1411",
-    port: "/dev/cu.SLAB_USBtoUART",
+    # port: "/dev/cu.usbmodem1411", #MacOS
+    port: "/dev/ttyUSB0", #Linux
+    # port: "/dev/cu.SLAB_USBtoUART", #Sandbox board
     speed: 115_200,
     sensors: [
       temp: "GT",
