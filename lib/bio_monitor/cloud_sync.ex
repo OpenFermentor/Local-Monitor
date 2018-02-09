@@ -3,8 +3,8 @@ defmodule BioMonitor.CloudSync do
     Module in charge of sending all the sync information to the cloud backend.
   """
 
-  # @base_url "https://bio-monitor-staging.herokuapp.com/api"
-  @base_url "http://localhost:2000/api"
+   @base_url "https://bio-monitor-staging.herokuapp.com/api"
+  # @base_url "http://localhost:2000/api"
   @headers [Accept: "application/json", "Content-Type": "application/json"]
 
   def new_routine(routine) do
