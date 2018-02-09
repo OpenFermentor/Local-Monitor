@@ -4,6 +4,11 @@ defmodule BioMonitor.Routine do
     Model used to define routines.
   """
 
+  alias BioMonitor.LogEntry
+  alias BioMonitor.Repo
+
+  @log_types %{reading_error: "reading_error", base_cal: "base_cal", acid_cal: "acid_cal", temp_change: "temp_change", system_error: "system_error"}
+
   schema "routines" do
     field :title, :string
     field :strain, :string
@@ -24,7 +29,9 @@ defmodule BioMonitor.Routine do
     field :trigger_after, :integer
     field :trigger_for, :integer
     has_many :readings, BioMonitor.Reading, on_delete: :delete_all
+    has_many :log_entries, BioMonitor.LogEntry, on_delete: :delete_all
     has_many :temp_ranges, BioMonitor.TempRange, on_delete: :delete_all, on_replace: :delete
+    has_many :tags, BioMonitor.Tag, on_delete: :delete_all, on_replace: :delete
 
     timestamps()
   end
@@ -36,7 +43,8 @@ defmodule BioMonitor.Routine do
     struct
     |> cast(params, [:title, :strain, :medium, :target_temp, :target_ph, :target_co2, :target_density, :estimated_time_seconds, :extra_notes, :uuid, :temp_tolerance, :ph_tolerance, :loop_delay, :balance_ph, :trigger_after, :trigger_for])
     |> cast_assoc(:temp_ranges, required: false)
-    |> validate_required([:title, :strain, :medium, :target_temp, :target_ph, :target_density, :estimated_time_seconds])
+    |> cast_assoc(:tags, required: false)
+    |> validate_required([:title, :strain, :medium, :target_temp, :target_ph, :estimated_time_seconds])
     |> generate_uuid
   end
 
@@ -47,6 +55,17 @@ defmodule BioMonitor.Routine do
     struct
     |> cast(params, [:started, :started_date])
     |> validate_required([:started, :started_date])
+  end
+
+  def log_types, do: @log_types
+
+  def log_entry(routine, type, description) do
+    case Ecto.build_assoc(routine, :log_entries)
+      |> LogEntry.changeset(%{type: type, description: description})
+      |> Repo.insert() do
+      {:ok, _log_entry} -> :ok
+      {:error, _changeset} -> :error
+    end
   end
 
   defp generate_uuid(changeset) do

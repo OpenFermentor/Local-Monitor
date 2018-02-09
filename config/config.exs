@@ -19,7 +19,7 @@ config :bio_monitor, BioMonitor.Endpoint,
 
 # Configures Elixir's Logger
 config :logger,
-  backends: [:console],
+  backends: [:console, Rollbax.Logger],
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
 
@@ -35,14 +35,23 @@ config :flames,
 # Configures ports and variables for Sensors.
 config :bio_monitor, BioMonitor.SensorManager,
   arduino: [
-    # port: "/dev/cu.usbmodem1421",
-    port: "/dev/cu.SLAB_USBtoUART",
+    # port: "/dev/cu.usbmodem1411", #MacOS
+    port: "/dev/ttyUSB0", #Linux
+    # port: "/dev/cu.SLAB_USBtoUART", #Sandbox board
     speed: 115_200,
     sensors: [
-      temp: "getTemp",
-      ph: "getPh"
+      temp: "GT",
+      ph: "GP"
     ]
   ]
+
+config :rollbax,
+  access_token: "748d79c477344594891796090fee241c",
+  environment: "production",
+  enabled: false # Disable on dev.
+
+config :logger, Rollbax.Logger,
+  level: :error
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

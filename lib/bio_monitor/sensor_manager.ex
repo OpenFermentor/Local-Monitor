@@ -51,21 +51,11 @@ defmodule BioMonitor.SensorManager do
     end
   end
 
-  def get_ph_offset do
-    with {:ok, value} <- send_and_read(:ph, "getPhOffset"),
-      {:ok, parsed_value} <- parse_reading(value)
-    do
-      parsed_value
-    else
-      _ -> :error
-    end
-  end
-
   @doc """
     sets the offset of the ph sensor for calibration
   """
-  def set_ph_offset(target, value,  offset) do
-    case send_and_read(:ph, "setPhOffset #{target} #{value} #{offset}") do
+  def calibratePh(type) do
+    case send_and_read(:ph, "CP #{type}") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -75,7 +65,7 @@ defmodule BioMonitor.SensorManager do
     sets on the acid pump to drop.
   """
   def pump_acid() do
-    case send_and_read(:ph, "setPump 0 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "SP 0 1:185,0:15,2:100,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -85,7 +75,7 @@ defmodule BioMonitor.SensorManager do
     sets on the base pump to drop.
   """
   def pump_base() do
-    case send_and_read(:ph, "setPump 1 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "SP 1 1:185,0:15,2:100,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -97,7 +87,7 @@ defmodule BioMonitor.SensorManager do
     the operator has set up for a time interval.
   """
   def pump_trigger(for_seconds) do
-    case send_and_read(:ph, "setPump 2 1:#{for_seconds},0") do
+    case send_and_read(:ph, "SP 2 1:#{for_seconds},0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -108,7 +98,7 @@ defmodule BioMonitor.SensorManager do
   """
   def push_acid() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 0 1:4000,0") do
+    case send_and_read(:ph, "SP 0 1:4000,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
@@ -119,8 +109,18 @@ defmodule BioMonitor.SensorManager do
   """
   def push_base() do
     ## TODO, change this values to the real ones
-    case send_and_read(:ph, "setPump 1 1:4000,0") do
+    case send_and_read(:ph, "SP 1 1:4000,0") do
       {:ok, _result} -> :ok
+      {:error, message, _description} -> {:error, message}
+    end
+  end
+
+  @doc """
+    Get the status of each sensor
+  """
+  def get_sensors_status() do
+    case send_and_read(:temp, "GS") do
+      {:ok, result} -> parse_sensors_status(result)
       {:error, message, _description} -> {:error, message}
     end
   end
@@ -133,10 +133,14 @@ defmodule BioMonitor.SensorManager do
       {:ok, temp} <- parse_reading(arduino_readings[:temp]),
       {:ok, ph} <- parse_reading(arduino_readings[:ph])
     do
-      {:ok, %{temp: temp, ph: ph, co2: 0, density: 0}}
+      IO.puts "~~~~~~~~~~~~~~~~~~~~~"
+      IO.puts "~~Temp is: #{temp}~~~"
+      IO.puts "~~Ph is: #{ph}~~~~~~~"
+      IO.puts "~~~~~~~~~~~~~~~~~~~~~"
+      {:ok, %{temp: temp, ph: ph}}
     else
-      :error ->
-        {:error, "Hubo un error al obtener las lecturas"}
+      {:error, message} ->
+        {:error, "Hubo un error al obtener las lecturas: #{message}"}
       _ ->
         {:error, "Error inesperado, por favor revise la conexión con la placa."}
     end
@@ -146,7 +150,7 @@ defmodule BioMonitor.SensorManager do
     Sends a command for an specific sensor.
     sensor should be one of the previously reigstered sensors.
 
-    example send_command(:temp, "getTemp")
+    example send_command(:temp, "GT")
     returns:
       * {:ok, result}
       * {:error, message}
@@ -168,7 +172,7 @@ defmodule BioMonitor.SensorManager do
     Sends a command for an specific sensor and reads the response.
     sensor should be one of the previously reigstered sensors.
 
-    example send_command(:temp, "getTemp")
+    example send_command(:temp, "GT")
     returns:
       * {:ok, result}
       * {:error, message}
@@ -191,7 +195,7 @@ defmodule BioMonitor.SensorManager do
   # [
   # %{
   #   port: "dummy port",
-  #   sensors: [temp: "getTemp", ph: "getPh"],
+  #   sensors: [temp: "GT, ph: "GP"],
   #   speed: 9600
   #  }
   #]
@@ -204,12 +208,33 @@ defmodule BioMonitor.SensorManager do
   end
 
   defp parse_reading(reading) do
-    with true <- reading != nil,
-      {parsed_reading, _} <- Float.parse(reading)
-    do
-      {:ok, parsed_reading}
-    else
-      _ -> :error
+    case reading do
+      nil -> {:error, "No se pudo obtener la lectura"}
+      "ERROR" -> {:error, "Error interno de la placa"}
+      {:error, message} -> {:error, message}
+      reading -> case Float.parse(reading) do
+        {parsed_reading, _} -> {:ok, parsed_reading}
+        _ -> {:error, "Hubo un error al conectarse con la placa"}
+      end
+    end
+  end
+
+  defp parse_sensors_status(response) do
+    case response do
+      "ERROR" -> {:error, "Error interno de la placa"}
+      response ->
+        strings = String.split(response, ",")
+          |> Enum.map(fn val ->
+            String.split(val, ":")
+          end)
+        {
+          :ok,
+         %{
+          pumps: strings |> Enum.at(0) |> Enum.at(1),
+          ph: strings |> Enum.at(1) |> Enum.at(1),
+          temp: strings |> Enum.at(2) |> Enum.at(1)
+          }
+        }
     end
   end
 

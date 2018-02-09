@@ -4,7 +4,7 @@ defmodule BioMonitor.RoutineController do
   alias BioMonitor.Routine
   alias BioMonitor.CloudSync
 
-  @routines_per_page "100"
+  @routines_per_page "20"
 
   def index(conn, params) do
     {routines, rummage} =
@@ -13,9 +13,16 @@ defmodule BioMonitor.RoutineController do
         "paginate" => %{
           "per_page" => @routines_per_page,
           "page" => "#{params["page"] || 1}"
+        },
+        "search" => %{
+          "title" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["title"]},
+          # TODO: Fix this to use OR instead of And on rummage query.
+          # "strain" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["strain"]},
+          # "medium" => %{"assoc" => [], "search_type" => "ilike", "search_term" => params["medium"]},
+          # "value" => %{"assoc" => ["tags"], "search_type" => "ilike", "search_term" => params["tag"]}
         }
       })
-    routines = Repo.all(routines) |> Repo.preload(:temp_ranges)
+    routines = Repo.all(routines) |> Repo.preload([:temp_ranges, :tags])
     render(conn, "index.json", routine: routines, page_info: rummage)
   end
 
@@ -23,8 +30,10 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
-        routine = routine |> Repo.preload(:temp_ranges)
-        CloudSync.new_routine(%{"routine" => Map.put(routine_params, :uuid, routine.uuid)})
+        routine = routine |> Repo.preload([:temp_ranges, :tags])
+        routine
+        |> CloudSync.routine_to_map
+        |> CloudSync.new_routine
         conn
         |> put_status(:created)
         |> put_resp_header("location", routine_path(conn, :show, routine))
@@ -37,17 +46,20 @@ defmodule BioMonitor.RoutineController do
   end
 
   def show(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
     render(conn, "show.json", routine: routine)
   end
 
   def update(conn, %{"id" => id, "routine" => routine_params}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags, :log_entries])
     changeset = Routine.changeset(routine, routine_params)
-    IO.inspect changeset
     case Repo.update(changeset) do
       {:ok, routine} ->
-        CloudSync.update_routine(%{"routine" => routine_params}, routine.uuid)
+        routine_updated = Repo.preload(routine, [:temp_ranges, :tags, :log_entries, :readings])
+        routine_updated
+        |> CloudSync.routine_to_map
+        |> CloudSync.update_routine(routine.uuid)
+        CloudSync.batch_reading_sync(routine_updated.uuid, routine_updated.readings)
         render(conn, "show.json", routine: routine)
       {:error, changeset} ->
         conn
@@ -64,19 +76,28 @@ defmodule BioMonitor.RoutineController do
   end
 
   def stop(conn, _params) do
-    if BioMonitor.RoutineMonitor.is_running?() do
-      BioMonitor.RoutineMonitor.stop_routine()
+    IO.puts "Stopping"
+    case BioMonitor.RoutineMonitor.is_running?() do
+      {:ok, true} ->
+        {:ok, routine} = BioMonitor.RoutineMonitor.stop_routine()
+        routine_updated = Repo.get!(Routine, routine.id) |> Repo.preload([:temp_ranges, :tags, :log_entries, :readings])
+        routine_updated
+        |> CloudSync.routine_to_map
+        |> CloudSync.update_routine(routine.uuid)
+        CloudSync.batch_reading_sync(routine_updated.uuid, routine_updated.readings)
+          send_resp(conn, :no_content, "")
+      _ -> send_resp(conn, :no_content, "")
     end
-    send_resp(conn, :no_content, "")
   end
 
   def start(conn, %{"id" => id}) do
-    routine = Repo.get!(Routine, id) |> Repo.preload(:temp_ranges)
+    routine = Repo.get!(Routine, id) |> Repo.preload([:temp_ranges, :tags])
     with running = BioMonitor.RoutineMonitor.is_running?(),
       {:ok, false} <- running,
       :ready <- already_run(routine),
       :ok <- BioMonitor.RoutineMonitor.start_routine(routine)
     do
+      IO.inspect routine
       render(conn, "show.json", routine: routine)
     else
       {:error, _, message} ->
@@ -108,15 +129,16 @@ defmodule BioMonitor.RoutineController do
     file = File.open!(Path.expand(path), [:write, :utf8])
 
     routine.readings
-      |> CSV.encode(headers: [:temp, :ph, :density, :inserted_at])
+      |> CSV.encode(headers: [:temp, :ph, :density, :product, :biomass, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
 
-    conn
+    conn = conn
       |> put_resp_header("Content-Disposition", "attachment; filename=#{path}")
       |> send_file(200, path)
 
     File.close(file)
     File.rm(path)
+    conn
   end
 
   def restart(conn, _params) do

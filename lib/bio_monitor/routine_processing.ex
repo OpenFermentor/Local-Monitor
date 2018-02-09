@@ -16,7 +16,7 @@ defmodule BioMonitor.RoutineProcessing do
   @temp_too_low_message "La temperatura está por debajo del rango establecido."
 
   def get_sensors_status do
-    case SensorManager.get_readings()  do
+    case SensorManager.get_sensors_status()  do
       {:ok, data} ->
         Broker.send_status(data)
       {:error, message} ->
@@ -58,26 +58,14 @@ defmodule BioMonitor.RoutineProcessing do
     end
   end
 
-  def send_ph_offset(target, offset) do
+  def calibrate_ph_for_target(target) do
     case target do
-      7 -> SensorManager.set_ph_offset("neutral", 7, offset)
-      4 -> SensorManager.set_ph_offset("acid", 4, offset)
-      10 -> SensorManager.set_ph_offset("base", 10, offset)
+      7 -> SensorManager.calibratePh("N")
+      4 -> SensorManager.calibratePh("A")
+      10 -> SensorManager.calibratePh("B")
     end
   end
 
-  def add_value_to_ph_cal(new_value, ph_cal) do
-    case Enum.count(ph_cal.values) >= 10 do
-      true ->
-        %{
-          ph_cal | values: ph_cal.values
-            |> List.delete_at(0)
-            |> List.insert_at(-1, new_value)
-        }
-      false ->
-        %{ph_cal| values: ph_cal.values |> List.insert_at(-1, new_value)}
-    end
-  end
 
   def save_routine_sart_timestamp(routine) do
     changeset = routine
@@ -96,6 +84,7 @@ defmodule BioMonitor.RoutineProcessing do
 
   def process_reading({:ok, reading}, routine, temp_target) do
     if Kernel.abs(reading.ph - routine.target_ph) > routine.ph_tolerance do
+      Routine.log_entry(routine, Routine.log_types.reading_error, @ph_out_of_range_message)
       Broker.send_routine_error(@ph_out_of_range_message)
       if routine.balance_ph do
         start_ph_balance(reading.ph, routine.target_ph, routine.ph_tolerance)
@@ -103,8 +92,10 @@ defmodule BioMonitor.RoutineProcessing do
     end
     if reading.temp - temp_target < -routine.temp_tolerance do
       Broker.send_routine_error(@temp_too_low_message)
+      Routine.log_entry(routine, Routine.log_types.reading_error, @temp_too_low_message)
     end
     if reading.temp - temp_target > routine.temp_tolerance do
+      Routine.log_entry(routine, Routine.log_types.reading_error, @temp_too_high_message)
       Broker.send_routine_error(@temp_too_high_message)
     end
     Broker.send_reading(reading, routine)
@@ -147,7 +138,7 @@ defmodule BioMonitor.RoutineProcessing do
   end
 
   def get_current_temp_target(routine, timestamp) do
-    routine = Repo.preload(routine, :temp_ranges)
+    routine = Repo.preload(routine, [:temp_ranges, :tags])
     elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
     current = routine.temp_ranges # Find the latest range (the one that should be running)
     |> Enum.filter(fn target ->
