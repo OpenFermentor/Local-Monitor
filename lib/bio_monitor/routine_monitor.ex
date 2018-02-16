@@ -5,6 +5,7 @@ defmodule BioMonitor.RoutineMonitor do
     The RoutineMonitor is in charge of controlling the currently running routine.
   """
   alias BioMonitor.Routine
+  alias BioMonitor.StateContainer
 
   @name RoutineMonitor
   # TODO change both intervals to higher values
@@ -76,13 +77,21 @@ defmodule BioMonitor.RoutineMonitor do
 
   # GenServer Callbacks
   def init(:ok) do
-    case SensorManager.start_sensors() do
-      {:ok, _message} ->
-        schedule_work(:loop, @loop_interval)
-      {:error, _message} ->
-        Broker.send_sensor_error(@uknown_sensor_error)
+    with retry_count = StateContainer.retry_count(),
+      true <- retry_count < 3,
+      state <- StateContainer.state(),
+      true <- state != nil
+    do
+      Process.sleep(10_000)
+      StateContainer.update_retry_count(retry_count + 1)
+      finish_init()
+      {:ok, state}
+    else
+      _ ->
+        StateContainer.reset()
+        finish_init()
+        {:ok, %MonitorState{}}
     end
-    {:ok, %MonitorState{}}
   end
 
   def handle_call({:start,  routine}, _from, state) do
@@ -93,6 +102,7 @@ defmodule BioMonitor.RoutineMonitor do
         with {:ok, _message } <- SensorManager.start_sensors(),
           {:ok, struct} <- Helpers.save_routine_sart_timestamp(routine)
         do
+          StateContainer.reset()
           Broker.send_start(routine)
           schedule_work(:routine, 1000)
           started_at =  System.system_time(:second)
@@ -259,18 +269,32 @@ defmodule BioMonitor.RoutineMonitor do
     {:noreply, state}
   end
 
-  def terminate(reason, _state) do
+  def terminate(reason, state) do
     case reason do
       :normal ->
         IO.puts "Server terminated normally"
       _ ->
-        Broker.send_system_error(
-          "Ocurrió un error inesperado en el sistema y el experimento se ha detenido, por favor revise las conexiones con la placa y reinicie el experimento."
-        )
+        if StateContainer.retry_count < 3 do
+          StateContainer.update_state(state)
+        else
+          StateContainer.update_state(nil)
+          Broker.send_system_error(
+            "Ocurrió un error inesperado en el sistema y el experimento se ha detenido, por favor revise las conexiones con la placa y reinicie el experimento."
+          )
+        end
     end
   end
 
   # Helpers
+  defp finish_init() do
+    case SensorManager.start_sensors() do
+      {:ok, _message} ->
+        schedule_work(:loop, @loop_interval)
+      {:error, _message} ->
+        Broker.send_sensor_error(@uknown_sensor_error)
+    end
+  end
+
   defp schedule_work(loop_name, delay) do
     Process.send_after(self(), loop_name, delay)
   end
