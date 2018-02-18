@@ -17,6 +17,7 @@ defmodule BioMonitor do
     ]
 
     opts = [strategy: :one_for_one, name: BioMonitor.Supervisor]
+    BioMonitor.StateContainer.start_link()
     Supervisor.start_link(children, opts)
   end
 
