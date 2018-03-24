@@ -30,7 +30,7 @@ defmodule BioMonitor.RoutineController do
     changeset = Routine.changeset(%Routine{}, routine_params)
     case Repo.insert(changeset) do
       {:ok, routine} ->
-        routine = routine |> Repo.preload([:temp_ranges, :tags])
+        routine = routine |> Repo.preload([:temp_ranges, :tags, :log_entries])
         routine
         |> CloudSync.routine_to_map
         |> CloudSync.new_routine
@@ -128,7 +128,7 @@ defmodule BioMonitor.RoutineController do
     file = File.open!(Path.expand(path), [:write, :utf8])
 
     routine.readings
-      |> CSV.encode(headers: [:temp, :ph, :density, :product, :biomass, :inserted_at])
+      |> CSV.encode(headers: [:temp, :ph, :substratum, :product, :biomass, :inserted_at])
       |> Enum.each(&IO.write(file, &1))
 
     conn = conn

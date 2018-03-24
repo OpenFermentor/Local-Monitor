@@ -3,8 +3,8 @@ defmodule BioMonitor.CloudSync do
     Module in charge of sending all the sync information to the cloud backend.
   """
 
-   @base_url "https://bio-monitor-staging.herokuapp.com/api"
-  # @base_url "http://localhost:2000/api"
+  #  @base_url "https://bio-monitor-staging.herokuapp.com/api"
+  @base_url "http://localhost:2000/api"
   @headers [Accept: "application/json", "Content-Type": "application/json"]
 
   def new_routine(routine) do
@@ -34,7 +34,10 @@ defmodule BioMonitor.CloudSync do
   def started_routine(params) do
     case HTTPotion.post("#{@base_url}/sync/started_routine", [body: Poison.encode!(params), headers: @headers]) do
       %HTTPotion.Response{body: _body, status_code: _status} -> :ok
-      %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
+      %HTTPotion.ErrorResponse{message: message} ->
+        IO.inspect "===Failed to start routine==="
+        IO.inspect message
+        :failed_to_connect
       _ -> :error
     end
   end
@@ -50,7 +53,10 @@ defmodule BioMonitor.CloudSync do
   def new_reading(params) do
     case HTTPotion.post("#{@base_url}/sync/new_reading", [body: Poison.encode!(params), headers: @headers]) do
       %HTTPotion.Response{body: _body, status_code: _status} -> :ok
-      %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
+      %HTTPotion.ErrorResponse{message: message} ->
+        IO.inspect "====== Reading error ====="
+        IO.inspect message
+        :failed_to_connect
       _ -> :error
     end
   end
@@ -73,7 +79,10 @@ defmodule BioMonitor.CloudSync do
 
   def alert(params) do
     case HTTPotion.post("#{@base_url}/sync/alert", [body: Poison.encode!(params), headers: @headers]) do
-      %HTTPotion.Response{body: _body, status_code: _status} -> :ok
+      %HTTPotion.Response{body: _body, status_code: _status} ->
+        IO.inspect "================= Alert ============="
+        IO.inspect params
+        :ok
       %HTTPotion.ErrorResponse{message: _message} -> :failed_to_connect
       _ -> :error
     end
@@ -144,8 +153,21 @@ defmodule BioMonitor.CloudSync do
         tags: render_tags(routine),
         trigger_for: routine.trigger_for,
         trigger_after: routine.trigger_after,
+        log_entries: render_log_entries(routine),
     }
   }
+  end
+
+  defp render_log_entries(routine) do
+    routine.log_entries
+    |> Enum.map(fn entry ->
+      %{
+        id: entry.id,
+        type: entry.type,
+        description: entry.description,
+        inserted_at: entry.inserted_at,
+      }
+    end)
   end
 
   defp render_tags(routine) do

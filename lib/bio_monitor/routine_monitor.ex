@@ -121,6 +121,7 @@ defmodule BioMonitor.RoutineMonitor do
 
   def handle_call(:stop, _from, state) do
     Broker.send_stop(state.routine)
+    StateContainer.update_state(nil)
     {:reply, {:ok, state.routine}, %{state | loop: :loop, routine: %{}}}
   end
 
