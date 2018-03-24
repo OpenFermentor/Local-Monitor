@@ -127,7 +127,7 @@ defmodule BioMonitor.RoutineProcessing do
 
   def check_for_pump_trigger(routine, timestamp) do
     elapsed_time = System.system_time(:second) - timestamp # Get the current second of the running routine.
-    if elapsed_time >= routine.trigger_after do
+    if elapsed_time >= routine.trigger_after && routine.trigger_after != nil do
       case SensorManager.pump_trigger(routine.trigger_for) do
         :ok -> true
         {:error, _message} -> false
