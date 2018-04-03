@@ -99,6 +99,7 @@ defmodule BioMonitor.ReadingController do
         changeset <- Reading.changeset(reading, all_reading_params),
         {:ok, reading} <- Repo.insert(changeset)
       do
+        BioMonitor.RoutineMessageBroker.send_reading(reading, routine)
         conn
           |> put_status(:created)
           |> render("created_reading.json", reading: reading)

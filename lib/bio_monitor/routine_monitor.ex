@@ -225,6 +225,12 @@ defmodule BioMonitor.RoutineMonitor do
       :routine ->
         case state.balancing_ph do
           true ->
+            new_temp = Helpers.get_current_temp_target(state.routine, state.started)
+            if new_temp != state.target_temp do
+              Routine.log_entry(state.routine, Routine.log_types.temp_change, "Cambió la temperatura objetivo a #{new_temp} grados.")
+              Broker.send_instruction("Por favor, colocar el circulador a #{new_temp} grados.")
+            end
+            state = %{state | target_temp: new_temp}
             reading = state.routine.id
             |> Helpers.fetch_reading
             |> Helpers.process_reading(state.routine, state.target_temp)

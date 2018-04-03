@@ -75,7 +75,7 @@ defmodule BioMonitor.SensorManager do
     sets on the base pump to drop.
   """
   def pump_base() do
-    case send_and_read(:ph, "SP 1 1:185,0:15,2:100,0") do
+    case send_and_read(:ph, "SP 1 1:255,0:15,2:100,0") do
       {:ok, _result} -> :ok
       {:error, message, _description} -> {:error, message}
     end
